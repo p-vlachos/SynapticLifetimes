@@ -1,0 +1,192 @@
+
+from brian2.units import second
+import sys, time
+import numpy as np
+import pandas as pd
+
+def extract_survival(turnover_data, N_neuron, t_split,
+                      t_cut = 0.*second):
+    '''
+    turnover data is assumed to be a numpy.array with 
+    lines consisting of the four entries
+    
+      gen/prune, t, i, j     
+
+    where 
+      -- gen/prune :: 1 if synapse became active, 
+                      0 if synapse became inactive
+      -- t         :: simulation time point in seconds(!)
+      -- i         :: pre-synaptic neuron index
+      -- j         :: post-synaptic neuron index
+
+    -----------
+
+    parameters:
+     
+     -- turnover_data  :: 
+     -- N_neuron       ::
+     -- t_split        :: 
+
+                          
+    returns: 
+
+     # -- lifetimes  :: duration from generation (or initial presence) 
+     #                  until pruning. Synapses generated (initally 
+     #                  present) but not yet pruned at simulation end 
+     #                  are NOT INCLUDED
+     # -- deathtimes :: like lifetimes, but from death to generation,
+     #                  i.e. time from begining of simulation until 
+     #                  first generation is not included 
+    '''
+
+    # array([[  1.,   0.,   2., 347.],
+    #        [  1.,   0.,   3., 248.],
+    #        [  1.,   0.,   4., 145.],
+    #        [  1.,   0.,  14., 210.],
+    #        [  1.,   0.,  20., 318.]])
+    #
+
+    t_split, t_cut = t_split/second, t_cut/second
+    full_t = []
+
+    a = time.time()
+    turnover_data = turnover_data[turnover_data[:,1]>= t_cut]
+    turnover_data[:,1] = turnover_data[:,1]-t_cut
+    b = time.time()
+    print('cutting took %.2f seconds' %(b-a))
+
+
+    df = pd.DataFrame(data=turnover_data, columns=['struct', 't', 'i', 'j'])
+
+    df = df.astype({'struct': 'int64', 'i': 'int64', 'j': 'int64'})
+
+    df['s_id'] = df['i'] * 1000 + df['j']
+
+    df = df.sort_values(['s_id', 't'])
+
+    excluded_ids = []
+    
+    for s_id, gdf in df.groupby('s_id'):
+
+        if len(gdf) == 1:
+            if gdf['struct'].iloc[0]==1 and gdf['t'].iloc[0]<=t_split:
+                # synapses started but did not die with sim tim
+                # add maximal survival time t_split
+                full_t.append(t_split)
+            else:
+                # the cases are:
+                #  -- synapse was present at beginning and died
+                #  -- synapse grew but we don't have enough time
+                #     data to track it's full survival
+                #
+                # we're not adding in these cases
+                pass
+
+        elif len(gdf) > 1:
+
+            # we need to test that...
+            tar = np.abs(np.diff(gdf['struct']))
+
+            if np.sum(tar)!=len(tar):
+                excluded_ids.append(s_id)
+
+            else:
+
+                if gdf['struct'].iloc[0] == 0:
+                    # dies first, get rid of first row
+                    gdf = gdf[1:]
+
+                if len(gdf)==1 and gdf['t'].iloc[0]<=t_split:
+                    # synapses started but did not die with sim tim
+                    # add maximal survival time t_split
+                    full_t.append(t_split)
+
+                elif len(gdf)>1 and gdf['t'].iloc[0]<=t_split:
+
+                    # only if first growth event is before t_split
+                    # otherwise not enough time to potentially
+                    # long surviving synapses
+                  
+                    # normalize to the times of the first growth event
+                    # +gdf['t'] = gdf['t']-gdf['t'].iloc[0]+
+                    # --> done below by adding to t_split
+
+                    # filter out events after window t_split
+                    gdf_cut = gdf[gdf['t'] <= t_split+gdf['t'].iloc[0]]
+
+                    # starts with growth and ends on pruning event
+                    if len(gdf_cut) % 2 == 0:
+
+                        srv_t = np.diff(gdf_cut['t'])
+                        assert np.max(srv_t)<=t_split
+
+                        full_t.extend(list(srv_t)[::2])
+
+                    # ends on growth event, need to find next pruning event
+                    elif len(gdf_cut) % 2 == 1:
+
+                        if len(gdf_cut) == 1:
+                            
+                            if len(gdf_cut) == len(gdf):
+                                # can't find any, add maximal survival
+                                full_t.append(t_split)
+
+                            else:
+                                dt = gdf['t'].iloc[len(gdf_cut)] - \
+                                     gdf_cut['t'].iloc[0]
+
+                                if dt > t_split:
+                                    full_t.append(t_split)
+                                else:
+                                    full_t.append(dt)
+
+                        elif len(gdf_cut) > 1:
+
+                            gdf_blk, gdf_end = gdf_cut[:-1], gdf_cut.iloc[-1]
+
+
+                            assert(gdf_blk['struct'].iloc[0]==1)
+                            assert(gdf_end['struct']==1)
+
+                            srv_t = np.diff(gdf_blk['t'])
+                            assert np.max(srv_t)<=t_split
+
+                            full_t.extend(list(srv_t)[::2])
+
+                            # process the final growth event gdf_cut
+                            
+                            if len(gdf_cut) == len(gdf):
+                                # final growth event within t_split did not
+                                # get pruned until simulation end, add max
+                                full_t.append(t_split)
+
+                            elif len(gdf_cut) < len(gdf):
+
+                                dt = gdf['t'].iloc[len(gdf_cut)] - \
+                                     gdf_end['t']
+
+                                if dt > t_split:
+                                    full_t.append(t_split)
+                                else:
+                                    full_t.append(dt)
+
+          
+       
+    b = time.time()
+    print('main loop took %.2f seconds' %(b-a))
+
+    print('Excluded contacts: ', len(excluded_ids))
+    
+    return full_t, excluded_ids
+
+
+
+
+def convert_full_t_to_srv_prb(full_t, t_max, bin_w):
+
+    bins = np.arange(bin_w, t_max+bin_w, bin_w)
+
+    counts, edges = np.histogram(full, bins=bins, density=False)
+
+    np.cumsum(counts[::-1])[::-1]/np.sum(counts)
+    
