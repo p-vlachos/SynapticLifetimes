@@ -1,0 +1,4 @@
+# Ignore simulation folders
+tests/
+running/
+completed/
