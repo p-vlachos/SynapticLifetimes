@@ -5,13 +5,14 @@ import matplotlib.pyplot as pl
 from matplotlib import rc
 
 rc('text', usetex=True)
-pl.rcParams['text.latex.preamble'] = [
-    r'\usepackage{tgheros}',   
-    r'\usepackage{sansmath}',  
-    r'\sansmath'               
-    r'\usepackage{siunitx}',   
-    r'\sisetup{detect-all}',   
-]  
+# pl.rcParams['text.latex.preamble'] = [
+#     r'\usepackage{tgheros}',   
+#     r'\usepackage{sansmath}',  
+#     r'\sansmath'               
+#     r'\usepackage{siunitx}',   
+#     r'\sisetup{detect-all}',   
+# ]  
+pl.rcParams['text.latex.preamble'] = r'\usepackage{tgheros} \usepackage{sansmath} \sansmath \usepackage{siunitx} \sisetup{detect-all}'
 
 import sys, os, itertools, pickle, decimal
 import numpy as np

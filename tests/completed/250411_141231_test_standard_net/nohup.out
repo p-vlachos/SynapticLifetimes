@@ -1,0 +1,9 @@
+
+
+Running  250411_141231_test_standard_net
+
+mode: result run
+./src/run_local.sh: line 22: tests/net_tests/test_standard_net: No such file or directory
+doing nonlocal
+./src/run_local.sh: line 31: srun: command not found
+Done.
