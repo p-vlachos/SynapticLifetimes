@@ -1,0 +1,6 @@
+
+* new test for init weights
+make only simulation with no weight changes
+
+confirm weight distribution at end of simulation is as expected
+

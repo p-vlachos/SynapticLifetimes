@@ -1,0 +1,81 @@
+
+** About
+Neural network simulator developed by Felix Hoffmann for his PhD.
+Original at https://github.com/synsrv/src_net.
+
+Network simulation using Brian 2 and Pypet written to analyse the survivability of transient synapses of cortical neurons.
+
+** Requirements
+To run the network simulation a Python 3 environment with Brian 2 (with patches), and Pypet is required. Git also has to be installed.
+Detailed dependencies are listed in ~environment.yml~.
+Below is an example installation routine for setting up a conda environment.
+This assumes that you already have anaconda or miniconda installed.
+
+#+BEGIN_SRC sh
+#!/bin/sh
+
+conda env create -f environment.yml
+conda activate excinhbal
+
+#+END_SRC
+
+This will also install Brian2 with patches.
+
+*** Brian2 Patches
+Brian2 patches are required for long simulations.
+We maintain our own repository of Brian2 with patches applied:
+[[https://github.com/excinhbal/brian2/branches]]
+
+In order to upgrade Brian2 to an up-to-date version:
+1. clone our Brian2 repository
+2. ~git remote add upstream https://github.com/brian-team/brian2.git~
+3. ~git fetch upstream~
+4. ~git checkout origin/<our most up to date branch> -b <new release tag>__excinhbal_fixes~
+5. ~git rebase <new release tag>~
+6. fix conflicts
+7. ~git log~ should now show a few commits like this https://github.com/excinhbal/brian2/commit/b3c7d3adadabb7d4f0b4b70dca818787a7714900
+   as newest commits of the branch and the next oldest commit should be the Brian2 release commit of the version that you wanted to upgrade to
+7. push the new branch to origin (our Brian2 repository)
+8. edit this repository's ~requirements.txt~ to point to the new branch
+
+For details about the patches check out [[https://github.com/brian-team/brian2/pull/1057][#1057]].
+
+** Installation
+
+Get the code from this repository including submodules with
+
+: git clone  --recurse-submodules https://github.com/excinhbal/network
+
+It is highly recommended to limit the level of parallelization when building the standalone_cpp simulator.
+In ~$HOME/.brian/user_preferences~ write, where ~4~ is the number of CPU cores your PC has:
+#+BEGIN_SRC ini
+[devices.cpp_standalone]
+extra_make_args_unix = ["-j4"]
+#+END_SRC
+
+** Run a simulation
+To verify your installation, within ~src_net~ run
+
+#+BEGIN_SRC sh
+./run_test.sh -l tests/net_tests/test_standard_net/
+#+END_SRC
+
+This will create a directory ~tests/~ on the same level as ~src_net~ where the code is copied an executed.
+
+** Explore parameters
+
+To run simulations exploring different parameter sets, create an ~explored_params.py~ in ~src_net/net/~, as for example found in any of the tests in ~net_tests/~. In the ~input_dict~ of ~explored_params.py~ specify the parameter setting of your choice and the runn simulation via
+
+#+BEGIN_SRC 
+./run.sh -l -n 2 -P "_two-concurrent-sims" -E
+#+END_SRC
+
+This will create ~running/~ and ~completed/~ directories on the same level as ~src_net/~. Once finished, the simulation directory is moved from ~running/~ to ~completed/~.
+
+** Run tests
+
+There are multiple sets of tests currently, they fall in two broad categories:
+1. tests that can be run with ~pytest~: ~pytest tests/pytests~
+2. all other tests, which can be run using ~./run_tests.sh~ as shown above
+
+

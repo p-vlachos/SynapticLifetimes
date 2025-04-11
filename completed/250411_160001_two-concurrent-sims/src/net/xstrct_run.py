@@ -22,7 +22,7 @@ print("Using {:d} cores".format(ncores))
 
 # check the state of the git repository
 # repo = git.Repo('./src/')
-repo = git.Repo('../../')
+repo = git.Repo('../')
 
 commit = None
 if not args.testrun:
