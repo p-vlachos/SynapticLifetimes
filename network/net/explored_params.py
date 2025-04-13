@@ -5,8 +5,8 @@ import numpy as np
 sigv = 1. / second
 
 input_dict = {'T1': [10 * second],
-              'T2': [100 * second], #5000
-              'pp_tcut': [100 * second], # 500
+              'T2': [1000 * second], #5000
+              'pp_tcut': [500 * second], # 500
               'T3': [5 * second],
               'T4': [5 * second],
               'syn_scl_rec': [0],
@@ -15,7 +15,7 @@ input_dict = {'T1': [10 * second],
               'synEE_rec': [1],
               'synEI_rec': [0],
               'stdp_rec_T': [1 * second],
-              'T5': [100 * second], #2000
+              'T5': [1000 * second], #2000
               'crs_crrs_rec': [0],
               'dt': [0.1 * ms],
               'N_e': [1600],
@@ -110,7 +110,7 @@ input_dict = {'T1': [10 * second],
               'scl_mode': ["scaling"],
               'scl_scaling_kappa': [2.5*Hz],
               'scl_scaling_eta': [0.001], #XXX
-              'scl_scaling_dt': [100 * ms],
+              'scl_scaling_dt': [1 * ms],
               'anormtar_rec': [1],
               'amin': [0.040],
               'amax': [0.320],
