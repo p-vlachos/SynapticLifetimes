@@ -29,11 +29,11 @@ input_dict = {'T1': [10 * second],
               'external_mode': ['memnoise'],
               'mu_e': [0.0*mV],
               'mu_i': [0.0*mV],
-              'sigma_e': [4.25*mV], #6.1, 4.1, 4.25 is the last value Jan used
-              'sigma_i': [4.25*mV],
-              'PInp_mode' : ['indep'],
-              'PInp_rate' : [8000*Hz],
-              'PInp_inh_rate' : [6000*Hz],
+              'sigma_e': [4.1*mV], #6.1, 4.1, 4.25 is the last value Jan used
+              'sigma_i': [4.1*mV],
+            #   'PInp_mode' : ['indep'],
+            #   'PInp_rate' : [8000*Hz],
+            #   'PInp_inh_rate' : [6000*Hz],
               #           ??                              ->  2.26 Hz  ....
               'p_ee': [0.08],
               'p_ei': [0.24],
@@ -58,7 +58,7 @@ input_dict = {'T1': [10 * second],
               'istdp_active': [1],
               'istdp_type': ['dbexp'],
               'iAplus': [0.030],
-              # 'iAminus': [-0.5*0.030],
+              'iAminus': [-0.5*0.030],
               # 'LTD_a': [0.8*ifactor*stdp_eta*0.1],  # original 0.1
 
               'strct_active': [1],
@@ -103,14 +103,14 @@ input_dict = {'T1': [10 * second],
               'T2_spks_rec': [0],
               'rates_rec': [1],
 
-              'dt_synEE_scaling': [100 * ms],
-              'eta_scaling': [1.0],
+              'dt_synEE_scaling': [100 * ms],           # Normalization timestep (how often to apply it)
+              'eta_scaling': [1.0],                     # Strength of normalization (if set on 1, then its instantaneous per dt)
 
               'scl_active': [1],
               'scl_mode': ["scaling"],
-              'scl_scaling_kappa': [2.5*Hz],
-              'scl_scaling_eta': [0.001], #XXX
-              'scl_scaling_dt': [1 * ms],
+              'scl_scaling_kappa': [2.5*Hz],            # Target firing rate
+              'scl_scaling_eta': [0.001], #XXX          # Scaling "learning rate" (1/τ)
+              'scl_scaling_dt': [1 * ms],               # Scaling timestep (how often to apply it)
               'anormtar_rec': [1],
               'amin': [0.040],
               'amax': [0.320],
