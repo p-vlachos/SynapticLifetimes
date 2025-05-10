@@ -110,7 +110,7 @@ input_dict = {'T1': [10 * second],
               'scl_mode': ["scaling"],
               'scl_scaling_kappa': [2.5*Hz],            # Target firing rate
               'scl_scaling_eta': [0.001], #XXX          # Scaling "learning rate" (1/τ)
-              'scl_scaling_dt': [1 * ms],               # Scaling timestep (how often to apply it)
+              'scl_scaling_dt': [100 * ms],               # Scaling timestep (how often to apply it)
               'anormtar_rec': [1],
               'amin': [0.040],
               'amax': [0.320],
