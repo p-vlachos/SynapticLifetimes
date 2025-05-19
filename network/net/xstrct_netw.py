@@ -929,8 +929,10 @@ def run_net(tr, gpu=False):
     if tr.cramer_noise_active:
         netw_objects.extend(network_features.cramer_noise(tr, GExc, GInh))
 
-            
-    # -------------- recording ------------------        
+
+    ##########################################################################
+    ############### -------------- Recording ------------------ ##############
+    ##########################################################################
 
     GExc_recvars = []
     if tr.memtraces_rec:
@@ -1008,8 +1010,6 @@ def run_net(tr, gpu=False):
         insP_EI_stat = StateMonitor(SynEI, 'insert_P', dt=tr.csample_dt,
                                     record=[0], when='end')
         netw_objects.extend([C_EI_stat, insP_EI_stat])
-
-
     
     GExc_spks = SpikeMonitor(GExc)
     GInh_spks = SpikeMonitor(GInh)
@@ -1078,7 +1078,6 @@ def run_net(tr, gpu=False):
 
         netw_objects.append(SynEI_a)
 
-        
 
     netw_objects.extend([GExc_stat, GInh_stat,
                          SynEE_stat, SynEE_a, 
@@ -1118,14 +1117,12 @@ def run_net(tr, gpu=False):
         for net_object in argv:
             net_object.active=False
 
-
-
-    ### Simulation periods
-            
-
+    ##########################################################################
+    ############### ---------- Simulation periods ------------- ##############
+    ##########################################################################
+    
     # --------- T1 ---------
-    # initial recording period,
-    # all recorders active
+    # initial recording period, all recorders active
 
     T1T3_recorders = [GExc_spks, GInh_spks, 
                       SynEE_stat, 
@@ -1146,8 +1143,7 @@ def run_net(tr, gpu=False):
 
 
     # --------- T2 ---------
-    # main simulation period
-    # only active recordings are:
+    # main simulation period, only active recordings are:
     #   1) turnover 2) C_stat 3) SynEE_a
 
     set_inactive(*T1T3_recorders)
@@ -1162,8 +1158,7 @@ def run_net(tr, gpu=False):
 
 
     # --------- T3 ---------
-    # second recording period,
-    # all recorders active
+    # second recording period, all recorders active
 
     set_active(*T1T3_recorders)
     
@@ -1173,8 +1168,7 @@ def run_net(tr, gpu=False):
     run_T3_split(net, tr)
     
     # --------- T4 ---------
-    # record STDP and scaling weight changes to file
-    # through the cpp models
+    # record STDP and scaling weight changes to file through the cpp models
     
     set_inactive(*T1T3_recorders)
 
@@ -1184,8 +1178,7 @@ def run_net(tr, gpu=False):
     run_T4(net, tr)
 
     # --------- T5 ---------
-    # freeze network and record Exc spikes
-    # for cross correlations
+    # freeze network and record Exc spikes for cross correlations
 
     if tr.scl_active:
         synee_scaling.active=False
@@ -1215,10 +1208,13 @@ def run_net(tr, gpu=False):
     if tr.synei_a_nrecpoints>0 and tr.sim.T2 > 0.*second:
         SynEI_a.record_single_timestep()
 
-    # --------- Build & Run -------------------
-
+    ##########################################################################
+    ############## -------------- Build & Run ------------------ #############
+    ##########################################################################
+    
     build_directory = 'builds/%.4d'%(tr.v_idx)
-    # copy C++ files over to build directory
+
+    # Copy C++ files over to build directory
     src_dir = os.path.dirname(os.path.realpath(__file__))
     os.makedirs(build_directory, exist_ok=True)
     shutil.copy(f"{src_dir}/output_files.cpp", build_directory)
@@ -1505,26 +1501,26 @@ def run_net(tr, gpu=False):
     from analysis.overview_winh import overview_figure
     overview_figure('builds/%.4d'%(tr.v_idx), namespace)
 
-    # from analysis.frequencies import frequencies_figure
-    # frequencies_figure('builds/%.4d'%(tr.v_idx))
+    from analysis.frequencies import frequencies_figure
+    frequencies_figure('builds/%.4d'%(tr.v_idx))
 
-    # from analysis.isi import isi_figure
-    # isi_figure('builds/%.4d'%(tr.v_idx))
+    from analysis.isi import isi_figure
+    isi_figure('builds/%.4d'%(tr.v_idx))
 
     from analysis.synw_fb import synw_figure
     synw_figure('builds/%.4d'%(tr.v_idx), namespace)
-    # if tr.istdp_active:
-    #     synw_figure('builds/%.4d'%(tr.v_idx), namespace, connections='EI')
+    if tr.istdp_active:
+        synw_figure('builds/%.4d'%(tr.v_idx), namespace, connections='EI')
 
     from analysis.synw_log_fb import synw_log_figure
     synw_log_figure('builds/%.4d'%(tr.v_idx), namespace)
-    # if tr.istdp_active:
-    #     synw_log_figure('builds/%.4d'%(tr.v_idx), namespace, connections='EI')
+    if tr.istdp_active:
+        synw_log_figure('builds/%.4d'%(tr.v_idx), namespace, connections='EI')
     
-    # from code.analysis.turnover_fb import turnover_figure
-    # turnover_figure('builds/%.4d'%(tr.v_idx), namespace, fit=False)
+    from code.analysis.turnover_fb import turnover_figure
+    turnover_figure('builds/%.4d'%(tr.v_idx), namespace, fit=False)
 
-    # from code.analysis.turnover_fb import turnover_figure
-    # turnover_figure('builds/%.4d'%(tr.v_idx), namespace, fit=True)
+    from code.analysis.turnover_fb import turnover_figure
+    turnover_figure('builds/%.4d'%(tr.v_idx), namespace, fit=True)
 
           
