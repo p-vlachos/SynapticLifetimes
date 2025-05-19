@@ -29,8 +29,8 @@ input_dict = {'T1': [10 * second],
               'external_mode': ['memnoise'],
               'mu_e': [0.0*mV],
               'mu_i': [0.0*mV],
-              'sigma_e': [6.1*mV], #6.1 (sub-crit), 4.1 (reverb), 4.25 is the last value Jan used
-              'sigma_i': [6.1*mV],
+              'sigma_e': [4.1*mV], #6.1 (sub-crit), 4.1 (reverb), 4.25 is the last value Jan used
+              'sigma_i': [4.1*mV],
             #   'PInp_mode' : ['indep'],
             #   'PInp_rate' : [8000*Hz],
             #   'PInp_inh_rate' : [6000*Hz],
