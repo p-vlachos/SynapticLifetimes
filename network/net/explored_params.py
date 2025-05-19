@@ -6,18 +6,18 @@ sigv = 1. / second
 
 input_dict = {'T1': [10 * second],
               'T2': [2_000 * second], #15_000
-              'pp_tcut': [500 * second], # 500
+              'pp_tcut': [500 * second], # 500  # Synapse turnover calculation onset
               'T3': [5 * second],
               'T4': [5 * second],
               'syn_scl_rec': [0],
               'syn_iscl_rec': [0],
               'scl_rec_T': [1 * second],
-              'synEE_rec': [1],
+              'synEE_rec': [1],         # Record synaptic spikes
               'synEI_rec': [0],
               'stdp_rec_T': [1 * second],
-              'T5': [1_000 * second], #2000
-              'crs_crrs_rec': [0],
-              'dt': [0.1 * ms],
+              'T5': [500 * second], #2000
+              'crs_crrs_rec': [0],      # Calc and record correlation
+              'dt': [0.125 * ms], #0.1
               'N_e': [1600],
               'N_i': [ 320],
               'syn_cond_mode': ['exp'],
@@ -29,7 +29,7 @@ input_dict = {'T1': [10 * second],
               'external_mode': ['memnoise'],
               'mu_e': [0.0*mV],
               'mu_i': [0.0*mV],
-              'sigma_e': [4.1*mV], #6.1, 4.1, 4.25 is the last value Jan used
+              'sigma_e': [4.1*mV], #6.1 (sub-crit), 4.1 (reverb), 4.25 is the last value Jan used
               'sigma_i': [4.1*mV],
             #   'PInp_mode' : ['indep'],
             #   'PInp_rate' : [8000*Hz],
@@ -56,9 +56,9 @@ input_dict = {'T1': [10 * second],
               'Aminus': [-0.5*0.015],
 
               'istdp_active': [1],
-              'istdp_type': ['dbexp'],
+              'istdp_type': ['sym'],  # dbexp
               'iAplus': [0.030],
-              'iAminus': [-0.5*0.030],
+            #   'iAminus': [-0.5*0.030],    # Only for dbexp
               # 'LTD_a': [0.8*ifactor*stdp_eta*0.1],  # original 0.1
 
               'strct_active': [1],
@@ -109,7 +109,7 @@ input_dict = {'T1': [10 * second],
               'scl_active': [1],
               'scl_mode': ["scaling"],
               'scl_scaling_kappa': [2.5*Hz],            # Target firing rate
-              'scl_scaling_eta': [0.001], #XXX          # Scaling "learning rate" (1/τ)
+              'scl_scaling_eta': [0.001], #XXX          # Scaling "learning rate" (1/τ, where τ the effector)
               'scl_scaling_dt': [100 * ms],               # Scaling timestep (how often to apply it)
               'anormtar_rec': [1],
               'amin': [0.040],
@@ -135,11 +135,11 @@ input_dict = {'T1': [10 * second],
               'h_IP_i': [-80 * Hz],  # disable
               'eta_IP': [0.01 * mV],
 
-              'syn_noise': [1],
+              'syn_noise': [0],
               'syn_noise_type': ['kesten'],
               'syn_kesten_mu_eta':       [0.003/second],
               'syn_kesten_var_eta':      [1.0*0.00001/second],
-              'syn_kesten_inh': [1],
+              'syn_kesten_inh': [0],
               'syn_kesten_mu_eta_i':       [0.003/second],
               'syn_kesten_var_eta_i':      [1.0*0.00001/second],
 
@@ -160,7 +160,7 @@ input_dict = {'T1': [10 * second],
 
               'stdp_ee_mode': ['song'],
 
-              'tau_r': [15 * second],
+              'tau_r': [15 * second],   # Timescale of activity sensor
 
               'ddcon_active': [1],
               'half_width': [150*um],

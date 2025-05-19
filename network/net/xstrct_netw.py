@@ -393,8 +393,6 @@ def run_net(tr, gpu=False):
         elif tr.syn_noise_type == 'decay':
             synEE_mod = f"{tr.synEE_mod}\n{tr.synEE_noise_decay}"
             synEI_mod = f"{tr.synEE_mod}\n{tr.synEI_noise_decay}"
-
-
     else:
         synEE_mod = '''%s 
                        %s''' %(tr.synEE_static, tr.synEE_mod)
