@@ -506,8 +506,6 @@ def run_net(tr, gpu=False):
         SynEI = Synapses(target=GExc, source=GInh, model=synEI_mod,
                          on_pre=synEI_pre_mod, on_post=synEI_post_mod,
                          namespace=namespace, dt=tr.synEE_mod_dt)
-
-        
     else:
         model = '''a : 1
                    syn_active : 1'''
