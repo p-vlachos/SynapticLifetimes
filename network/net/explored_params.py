@@ -51,8 +51,8 @@ input_dict = {'T1': [10 * second],
               'external_mode': ['memnoise'],
               'mu_e': [0.0*mV],
               'mu_i': [0.0*mV],
-              'sigma_e': [6.1*mV], # 6.1 (sub-crit - noise), 4.5 (reverb - rec)
-              'sigma_i': [6.1*mV],
+              'sigma_e': [4.5*mV], # 6.1 (sub-crit - noise), 4.5 (reverb - rec)
+              'sigma_i': [4.5*mV],
               'Vt_e': [-50. * mV],
               'Vt_i': [-50. * mV],
               'Vr_e': [-70. * mV],
