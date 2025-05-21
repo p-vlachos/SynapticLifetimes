@@ -94,10 +94,10 @@ input_dict = {'T1': [10 * second],
               'Aminus': [-0.8127*stdp_eta],
 
               'istdp_active': [1],
-              'istdp_type': ['sym'],      # or 'dbexp'. Jan told me he used the dbexp
+              'istdp_type': ['dbexp'],      # or 'dbexp'. Jan told me he used the dbexp
               'iAplus': [1.6253*ifactor*stdp_eta],
-            #   'iAminus': [-0.5*1.6253*ifactor*stdp_eta],    # This is for assymetric
-              'LTD_a': [0.8*ifactor*stdp_eta*0.1],  # for symmetric (why like this)
+              'iAminus': [-0.5*1.6253*ifactor*stdp_eta],    # This is for assymetric
+              # 'LTD_a': [0.8*ifactor*stdp_eta*0.1],  # for symmetric (why like this)
 
               # --- Structural ---
               'strct_active': [1],
@@ -118,7 +118,7 @@ input_dict = {'T1': [10 * second],
               'scl_active': [1],
               'scl_mode': ["scaling"],
               'scl_scaling_kappa': [2.5*Hz],    # Target firing rate
-              'scl_scaling_eta': [0.1],         # Scaling "learning rate" (1/τ, where τ the effector)
+              'scl_scaling_eta': [0.001],         # Scaling "learning rate" (1/τ, where τ the effector)
               'scl_scaling_dt': [1 * second],   # Scaling timestep (how often to apply it)
               
               'iscl_active': [1],
