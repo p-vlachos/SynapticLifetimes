@@ -37,15 +37,15 @@ input_dict = {'T1': [10 * second],
               'grid_wrap': [1],
 
               'syn_delay_active': [1],
-              'syn_dd_delay_active' : [0],  # I implemented this (?)
+              'syn_dd_delay_active' : [0],  # I implemented this (keep at zero)
               'synEE_delay': [3.0*ms],
-              'synEE_delay_windowsize': [1.5*ms], #1.5
+              'synEE_delay_windowsize': [1.5*ms],
               'synIE_delay': [1.0*ms],
-              'synIE_delay_windowsize': [0.5*ms], #0.5
+              'synIE_delay_windowsize': [0.5*ms],
               'synII_delay': [1.0*ms],
-              'synII_delay_windowsize': [0.5*ms], #0.5
+              'synII_delay_windowsize': [0.5*ms],
               'synEI_delay': [0.5*ms],
-              'synEI_delay_windowsize': [0.25*ms], #0.25
+              'synEI_delay_windowsize': [0.25*ms],
 
               # Neuronal parameters
               'external_mode': ['memnoise'],
@@ -118,7 +118,7 @@ input_dict = {'T1': [10 * second],
               'scl_active': [1],
               'scl_mode': ["scaling"],
               'scl_scaling_kappa': [4.5*Hz],    # Target firing rate
-              'scl_scaling_eta': [0.0001], # 0.1         # Scaling "learning rate" (1/τ, where τ the effector)
+              'scl_scaling_eta': [0.1], # 0.1         # Scaling "learning rate" (1/τ, where τ the effector)
               'scl_scaling_dt': [1 * second],   # Scaling timestep (how often to apply it)
               
               'iscl_active': [1],
@@ -126,7 +126,7 @@ input_dict = {'T1': [10 * second],
               # --- General ---
               'tau_r': [15 * second],   # Timescale of activity sensor
               'amin': a_min_insert,
-              'amax': [1.], #[0.1662*2],
+              'amax': [0.1662*2],
               'amin_i' : [0.005],
               'amax_i' : [0.320],
               'ATotalMax': [3.4*2.65],
@@ -166,7 +166,7 @@ input_dict = {'T1': [10 * second],
               'T2_spks_rec': [0],
               'rates_rec': [1],
               'anormtar_rec': [1],
-              'syn_scl_rec': [1],       # 0
+              'syn_scl_rec': [0],
               'syn_iscl_rec': [0],
               'scl_rec_T': [1 * second],
               'synEE_rec': [0],         # Record synaptic spikes
