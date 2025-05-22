@@ -9,10 +9,10 @@ stdp_eta = 0.01         #
 ifactor = 1.75          # 
 
 input_dict = {'T1': [10 * second],
-              'T2': [2_000 * second],   # 50_000
+              'T2': [50000 * second],   # 50_000
               'T3': [5 * second],
               'T4': [5 * second],
-              'T5': [500 * second],     # 15_000
+              'T5': [15000 * second],     # 15_000
               'dt': [0.1 * ms],
               
               'random_seed': [7910], #, 13278, 37459, 7910, 13278, 37459]
@@ -118,7 +118,7 @@ input_dict = {'T1': [10 * second],
               'scl_active': [1],
               'scl_mode': ["scaling"],
               'scl_scaling_kappa': [4.5*Hz],    # Target firing rate
-              'scl_scaling_eta': [0.1], # 0.1         # Scaling "learning rate" (1/τ, where τ the effector)
+              'scl_scaling_eta': [0.0001], # 0.1         # Scaling "learning rate" (1/τ, where τ the effector)
               'scl_scaling_dt': [1 * second],   # Scaling timestep (how often to apply it)
               
               'iscl_active': [1],
