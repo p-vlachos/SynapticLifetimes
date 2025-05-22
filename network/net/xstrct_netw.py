@@ -795,7 +795,7 @@ def run_net(tr, gpu=False):
     #     GExc.h_ip = tr.h_ip
     #     GExc.run_regularly(tr.intrinsic_mod, dt = tr.it_dt, when='end')
 
-    # structural plasticity
+    # --- Structural plasticity ---
     if tr.netw.config.strct_active:
         if tr.strct_mode == 'zero':    
             if tr.turnover_rec:
@@ -1515,10 +1515,10 @@ def run_net(tr, gpu=False):
     if tr.istdp_active:
         synw_log_figure('builds/%.4d'%(tr.v_idx), namespace, connections='EI')
     
-    from code.analysis.turnover_fb import turnover_figure
+    from analysis.turnover_fb import turnover_figure
     turnover_figure('builds/%.4d'%(tr.v_idx), namespace, fit=False)
 
-    from code.analysis.turnover_fb import turnover_figure
+    from analysis.turnover_fb import turnover_figure
     turnover_figure('builds/%.4d'%(tr.v_idx), namespace, fit=True)
 
           
