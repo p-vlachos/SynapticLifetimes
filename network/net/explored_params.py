@@ -118,7 +118,7 @@ input_dict = {'T1': [10 * second],
               'scl_active': [1],
               'scl_mode': ["scaling"],
               'scl_scaling_kappa': [4.5*Hz],    # Target firing rate
-              'scl_scaling_eta': [0.1], # 0.1         # Scaling "learning rate" (1/τ, where τ the effector)
+              'scl_scaling_eta': [0.0001], # 0.1         # Scaling "learning rate" (1/τ, where τ the effector)
               'scl_scaling_dt': [1 * second],   # Scaling timestep (how often to apply it)
               
               'iscl_active': [1],
@@ -126,7 +126,7 @@ input_dict = {'T1': [10 * second],
               # --- General ---
               'tau_r': [15 * second],   # Timescale of activity sensor
               'amin': a_min_insert,
-              'amax': [0.1662*2],
+              'amax': [1.], #[0.1662*2],
               'amin_i' : [0.005],
               'amax_i' : [0.320],
               'ATotalMax': [3.4*2.65],
