@@ -9,10 +9,10 @@ stdp_eta = 0.01         #
 ifactor = 1.75          # 
 
 input_dict = {'T1': [10 * second],
-              'T2': [50000 * second],   # 50_000
+              'T2': [5000 * second],   # 50_000
               'T3': [5 * second],
               'T4': [5 * second],
-              'T5': [15000 * second],     # 15_000
+              'T5': [1500 * second],     # 15_000
               'dt': [0.1 * ms],
               
               'random_seed': [7910], #, 13278, 37459, 7910, 13278, 37459]
