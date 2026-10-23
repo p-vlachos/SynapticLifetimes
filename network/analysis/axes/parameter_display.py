@@ -18,11 +18,11 @@ def netw_params_display(ax, bpath, nsp):
             transform = ax.transAxes)
 
 
-    text = '$N_e$=' +str(int(nsp['N_e'])) + ', $\, N_i$=%d' %(int(nsp['N_i'])) +\
+    text = '$N_e$=' +str(int(nsp['N_e'])) + ', $\\, N_i$=%d' %(int(nsp['N_i'])) +\
            '\n $p_{ee}$ = %.2f' % (nsp['p_ee']) +\
-           ', $\, p_{ie}$ = %.2f' % (nsp['p_ie']) +\
+           ', $\\, p_{ie}$ = %.2f' % (nsp['p_ie']) +\
            '\n $p_{ei}$ = %.2f' % (nsp['p_ei']) +\
-           ', $\, p_{ii}$ = %.2f' % (nsp['p_ii'])
+           ', $\\, p_{ii}$ = %.2f' % (nsp['p_ii'])
 
     ax.text(0., 0.85, text,
             horizontalalignment='left',
@@ -51,7 +51,7 @@ def netw_params_display(ax, bpath, nsp):
            '$T_3 = '+r'\text{\SI{'+'%d}{s}' %(int(nsp['T3']/second))+'}$' +\
            '\n$T_4 = '+r'\text{\SI{'+'%d}{s}' %(int(nsp['T4']/second))+'}$, '+\
            '$T_5 = '+r'\text{\SI{'+'%d}{s}' %(int(nsp['T5']/second))+'}$, ' +\
-           '$dt='+r'\text{'+'\SI{%.2f}{ms}' %(nsp['dt']/ms) +'}$'
+           '$dt='+r'\text{'+'\\SI{%.2f}{ms}' %(nsp['dt']/ms) +'}$'
 
 
     ax.text(0., 0.215, text,
@@ -82,12 +82,12 @@ def neuron_params_display(ax, bpath, nsp):
             transform = ax.transAxes)
 
     
-    text = '$'+r'\tau'+'$=\SI{%.0f}{ms}' %(nsp['tau']/ms) +\
-           ', $\,E_l$= \SI{%.0f}{mV}' % (nsp['El']/mV) +\
-           '\n $\, E_e$= \SI{%.0f}{mV}' % (nsp['Ee']/mV) +\
-           '$,\, E_i$= \SI{%.0f}{mV}' % (nsp['Ei']/mV) +\
-           '\n $'+r'\,\,\,\,\,\, \tau_e'+'$=\SI{%.0f}{ms}' % (nsp['tau_e']/ms) +\
-           ', $'+r'\tau_i'+'$=\SI{%.0f}{ms}' % (nsp['tau_i']/ms)
+    text = '$'+r'\tau'+'$=\\SI{%.0f}{ms}' %(nsp['tau']/ms) +\
+           ', $\\,E_l$= \\SI{%.0f}{mV}' % (nsp['El']/mV) +\
+           '\n $\\, E_e$= \\SI{%.0f}{mV}' % (nsp['Ee']/mV) +\
+           '$,\\, E_i$= \\SI{%.0f}{mV}' % (nsp['Ei']/mV) +\
+           '\n $'+r'\,\,\,\,\,\, \tau_e'+'$=\\SI{%.0f}{ms}' % (nsp['tau_e']/ms) +\
+           ', $'+r'\tau_i'+'$=\\SI{%.0f}{ms}' % (nsp['tau_i']/ms)
 
     ax.text(0., 0.85, text,
             horizontalalignment='left',
@@ -113,10 +113,10 @@ def neuron_params_display(ax, bpath, nsp):
             transform = ax.transAxes)
 
     
-    text = '$V^T_{e}$=\SI{%.2f}{mV}' % (nsp['Vt_e']/mV) +\
-           ', $V^T_{i}$=\SI{%.2f}{mV}' % (nsp['Vt_i']/mV) +\
-           '\n $V^r_{e}$=\SI{%.0f}{mV}' % (nsp['Vr_e']/mV) +\
-           ', $V^r_{i}$=\SI{%.0f}{mV}' % (nsp['Vr_i']/mV) 
+    text = '$V^T_{e}$=\\SI{%.2f}{mV}' % (nsp['Vt_e']/mV) +\
+           ', $V^T_{i}$=\\SI{%.2f}{mV}' % (nsp['Vt_i']/mV) +\
+           '\n $V^r_{e}$=\\SI{%.0f}{mV}' % (nsp['Vr_e']/mV) +\
+           ', $V^r_{i}$=\\SI{%.0f}{mV}' % (nsp['Vr_i']/mV) 
 
 
     ax.text(0., 0.2, text,
@@ -151,14 +151,14 @@ def synapse_params_display(ax, bpath, nsp):
 
     
     text = '$a_{ee}=$ %.2E ' %(Decimal(nsp['a_ee']/nsp['ascale'])) +\
-           '$a_{\mathrm{scale}}$' +\
+           '$a_{\\mathrm{scale}}$' +\
            '\n$a_{ie}=$ %.2E ' %(Decimal(nsp['a_ie']/nsp['ascale'])) +\
-           '$a_{\mathrm{scale}}$' +\
+           '$a_{\\mathrm{scale}}$' +\
            '\n $a_{ei}$ = %.2E ' % (Decimal(nsp['a_ei']/nsp['ascale'])) +\
-           '$a_{\mathrm{scale}}$' +\
+           '$a_{\\mathrm{scale}}$' +\
            '\n $a_{ii}$ = %.2E '  % Decimal((nsp['a_ii']/nsp['ascale']))  +\
-           '$a_{\mathrm{scale}}$' +\
-           '\n$a_{\mathrm{scale}} =$ %.3E' % Decimal(nsp['ascale'])
+           '$a_{\\mathrm{scale}}$' +\
+           '\n$a_{\\mathrm{scale}} =$ %.3E' % Decimal(nsp['ascale'])
                                             
     ax.text(0., 0.75, text,
             horizontalalignment='left',
@@ -189,11 +189,11 @@ def stdp_params_display(ax, bpath, nsp):
             transform = ax.transAxes)
     
     
-    text = r'$\tau'+'_{\mathrm{pre}} =\,$ \SI{%.2f}{ms}' %(nsp['taupre']/ms) +\
-            r',$\,\tau'+'_{\mathrm{post}}=\,$ \SI{%.2f}{ms}' %(nsp['taupost']/ms) +\
-            '\n $A_{\mathrm{plus}}\,\,\,$= $\,\,\,\,%f$' %(nsp['Aplus']) + \
-            '\n $A_{\mathrm{minus}}$= $%f$' %(nsp['Aminus']) +\
-            '\n $a_{\mathrm{max}} = '+'%f' %(nsp['amax']) +'$'
+    text = r'$\tau'+'_{\\mathrm{pre}} =\\,$ \\SI{%.2f}{ms}' %(nsp['taupre']/ms) +\
+            r',$\,\tau'+'_{\\mathrm{post}}=\\,$ \\SI{%.2f}{ms}' %(nsp['taupost']/ms) +\
+            '\n $A_{\\mathrm{plus}}\\,\\,\\,$= $\\,\\,\\,\\,%f$' %(nsp['Aplus']) + \
+            '\n $A_{\\mathrm{minus}}$= $%f$' %(nsp['Aminus']) +\
+            '\n $a_{\\mathrm{max}} = '+'%f' %(nsp['amax']) +'$'
 
     ax.text(0., 0.85, text,
             horizontalalignment='left',
@@ -249,9 +249,9 @@ def sn_params_display(ax, bpath, nsp):
             transform = ax.transAxes)
 
     text = r'$a^{ee}_{\mathrm{TotalMax}} = %f $' %(nsp['ATotalMax']) +\
-           '\n $\Delta_{\mathrm{scaling}} =\,$' +\
-           '\SI{%.2f}{ms}' %(nsp['dt_synEE_scaling']/ms) + \
-           '\n $\eta_{\mathrm{scaling}} = %f$' %(nsp['eta_scaling'])
+           '\n $\\Delta_{\\mathrm{scaling}} =\\,$' +\
+           '\\SI{%.2f}{ms}' %(nsp['dt_synEE_scaling']/ms) + \
+           '\n $\\eta_{\\mathrm{scaling}} = %f$' %(nsp['eta_scaling'])
 
     ax.text(0., 0.85, text,
             horizontalalignment='left',
@@ -305,25 +305,25 @@ def strct_params_display(ax, bpath, nsp):
             transform = ax.transAxes)
 
 
-    text = '$p_{\mathrm{insert}} = %f$' %(nsp['insert_P']) +\
-           '\n$a_{\mathrm{insert}} = %f$' %(nsp['a_insert']) +\
+    text = '$p_{\\mathrm{insert}} = %f$' %(nsp['insert_P']) +\
+           '\n$a_{\\mathrm{insert}} = %f$' %(nsp['a_insert']) +\
            '\n$c = %f$' %(nsp['strct_c']) +\
-           '\n$p_{\mathrm{inactivate}} = %f$' %(nsp['p_inactivate']) +\
-           '\n $a_{\mathrm{thrshld}} = %f$' %(nsp['prn_thrshld']) +\
-           '\n $\Delta_{\mathrm{strct}} =\,$ \SI{%.2f}{ms}' %(nsp['strct_dt']/ms)
+           '\n$p_{\\mathrm{inactivate}} = %f$' %(nsp['p_inactivate']) +\
+           '\n $a_{\\mathrm{thrshld}} = %f$' %(nsp['prn_thrshld']) +\
+           '\n $\\Delta_{\\mathrm{strct}} =\\,$ \\SI{%.2f}{ms}' %(nsp['strct_dt']/ms)
 
     if nsp['istrct_active']==1:
         
-        text = '$p^{\mathrm{EE}}_{\mathrm{insert}} = %f$' %(nsp['insert_P']) +\
-               ', $p^{\mathrm{EI}}_{\mathrm{insert}} = %f$' %(nsp['insert_P_ei']) +\
-               '\n$a^{\mathrm{EE}}_{\mathrm{insert}} = %f$' %(nsp['a_insert']) +\
-               ', $a^{\mathrm{EI}}_{\mathrm{insert}} = %f$' %(nsp['a_insert']) +\
+        text = '$p^{\\mathrm{EE}}_{\\mathrm{insert}} = %f$' %(nsp['insert_P']) +\
+               ', $p^{\\mathrm{EI}}_{\\mathrm{insert}} = %f$' %(nsp['insert_P_ei']) +\
+               '\n$a^{\\mathrm{EE}}_{\\mathrm{insert}} = %f$' %(nsp['a_insert']) +\
+               ', $a^{\\mathrm{EI}}_{\\mathrm{insert}} = %f$' %(nsp['a_insert']) +\
                '\n$c^{EE} = %f$' %(nsp['strct_c']) +\
                ', $c^{EI} = %f$' %(nsp['strct_c']) +\
-               '\n$p^{\mathrm{EE}}_{\mathrm{inactivate}} = %f$' %(nsp['p_inactivate']) +\
-               ', $p^{\mathrm{EI}}_{\mathrm{inactivate}} = %f$' %(nsp['p_inactivate']) +\
-               '\n $a_{\mathrm{thrshld}} = %f$' %(nsp['prn_thrshld']) +\
-               '\n $\Delta_{\mathrm{strct}} =\,$ \SI{%.2f}{ms}' %(nsp['strct_dt']/ms)
+               '\n$p^{\\mathrm{EE}}_{\\mathrm{inactivate}} = %f$' %(nsp['p_inactivate']) +\
+               ', $p^{\\mathrm{EI}}_{\\mathrm{inactivate}} = %f$' %(nsp['p_inactivate']) +\
+               '\n $a_{\\mathrm{thrshld}} = %f$' %(nsp['prn_thrshld']) +\
+               '\n $\\Delta_{\\mathrm{strct}} =\\,$ \\SI{%.2f}{ms}' %(nsp['strct_dt']/ms)
         
 
     ax.text(0., 0.85, text,
@@ -354,10 +354,10 @@ def poisson_input_params_display(ax, bpath, nsp):
                 transform = ax.transAxes)
 
 
-        text = '$N_{\mathrm{poisson}} = %d$' %(int(nsp['NPInp'])) +\
+        text = '$N_{\\mathrm{poisson}} = %d$' %(int(nsp['NPInp'])) +\
                '\n'+r'$\mathrm{rate} = \text{\SI{'+'%.3f}{Hz}}$' \
                   %(nsp['PInp_rate']/Hz) +\
-               '\n' +'$N_{\mathrm{poisson}} = %d$' %(int(nsp['NPInp_inh'])) +\
+               '\n' +'$N_{\\mathrm{poisson}} = %d$' %(int(nsp['NPInp_inh'])) +\
                '\n'+r'$\mathrm{rate} = \text{\SI{'+'%.3f}{Hz}}$' \
                   %(nsp['PInp_inh_rate']/Hz) 
 
@@ -391,13 +391,13 @@ def poisson_input_params_display(ax, bpath, nsp):
                 transform = ax.transAxes)
 
 
-        text = '$\mu_{\mathrm{e}} =' + r'\text{\SI{' + \
+        text = '$\\mu_{\\mathrm{e}} =' + r'\text{\SI{' + \
                '%.2f}{mV}}$, ' %(nsp['mu_e']/mV) + \
-               '$\mu_{\mathrm{i}} =' + r'\text{\SI{' + \
+               '$\\mu_{\\mathrm{i}} =' + r'\text{\SI{' + \
                '%.2f}{mV}}$, ' %(nsp['mu_i']/mV) + \
-               '\n' + '$\sigma_{\mathrm{e}} =' + r'\text{\SI{' + \
+               '\n' + '$\\sigma_{\\mathrm{e}} =' + r'\text{\SI{' + \
                '%.2f}{mV}}$, ' %(nsp['sigma_e']/mV) + \
-               '$\sigma_{\mathrm{i}} =' + r'\text{\SI{' + \
+               '$\\sigma_{\\mathrm{i}} =' + r'\text{\SI{' + \
                '%.2f}{mV}}$, ' %(nsp['sigma_i']/mV) 
                
         ax.text(0., 0.85, text,

@@ -2,3 +2,5 @@
 tests/
 running/
 completed/
+# Python bytecode
+__pycache__/

@@ -971,7 +971,7 @@ def plot_stdp_weight_change(ax1, centers, wdw_poisson, rev_mean, rev_std, sub_me
         ax1.plot(centers, wdw_poisson, color="orange", label="Poisson")
     ax1.set_ylim(*ylim)
     ax1.set_xlim(*xlim)
-    ax1.set_xlabel("$\Delta$w/second")
+    ax1.set_xlabel("$\\Delta$w/second")
     ax1.set_ylabel("density")
     if legendargs is None:
         legendargs = dict(bbox_to_anchor=(1.02, 0.08), handlelength=0.75)

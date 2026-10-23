@@ -35,7 +35,7 @@ def yasumatsu_plot(bpath, nsp):
 
         for j,(tstart,tstop) in enumerate([(-10,-1), (-5,-1), (-2,-1)]):
 
-            label = 't=\SI{' + '%d' %((synee_a['t'][tstop] - synee_a['t'][tstart])/second) + '}{s}' 
+            label = 't=\\SI{' + '%d' %((synee_a['t'][tstop] - synee_a['t'][tstart])/second) + '}{s}' 
             
             bin_w, cutoff = 1*second, 0
 
@@ -71,7 +71,7 @@ def yasumatsu_plot(bpath, nsp):
 
         for j,(tstart,tstop) in enumerate([(10,19), (10,14), (10,11)]):
 
-            label = 't=\SI{' + '%d' %((synee_a['t'][tstop] - synee_a['t'][tstart])/second) + '}{s}' 
+            label = 't=\\SI{' + '%d' %((synee_a['t'][tstop] - synee_a['t'][tstart])/second) + '}{s}' 
             
             bin_w, cutoff = 1*second, 0
 
@@ -103,7 +103,7 @@ def yasumatsu_plot(bpath, nsp):
         ax.legend(frameon=False, prop={'size': 8})
 
         ax.set_xlabel('synaptic weight')
-        ax.set_ylabel('$\Delta$ synaptic weight')
+        ax.set_ylabel('$\\Delta$ synaptic weight')
 
         ax.set_xlim(right=0.05)
 

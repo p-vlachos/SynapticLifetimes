@@ -1,8 +1,8 @@
 #!/bin/bash
 
-rm -rf src/analysis
-cp -r ~/lab/netw-mod/analysis-dev/ src/analysis/
+# Run from inside a simulation directory (completed/<timestamp>/),
+# uses the analysis code that was copied with the simulation (src/)
 
-#python -m code.analysis.overview
-#python -m src.analysis.t5_rasters
-python -m src.analysis.t5_peaks
+#PYTHONPATH="$PWD/src" python -m analysis.overview
+#PYTHONPATH="$PWD/src" python -m analysis.t5_rasters
+PYTHONPATH="$PWD/src" python -m analysis.t5_peaks

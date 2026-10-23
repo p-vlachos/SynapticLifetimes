@@ -37,7 +37,7 @@ def yasumatsu_graph(bpath, nsp):
         for k,stepsize in enumerate([1,5,25]): 
 
             tstart = 100
-            label = 't=\SI{' + '%d' %((synee_a['t'][tstart+stepsize] - synee_a['t'][tstart])/second) + '}{s}'
+            label = 't=\\SI{' + '%d' %((synee_a['t'][tstart+stepsize] - synee_a['t'][tstart])/second) + '}{s}'
 
 
             syn_a = synee_a['a'][tstart:,:]
@@ -91,7 +91,7 @@ def yasumatsu_graph(bpath, nsp):
 
             tstart = 0
             tstop = 50
-            label = 't=\SI{' + '%d' %((synee_a['t'][tstart+stepsize] - synee_a['t'][tstart])/second) + '}{s}'
+            label = 't=\\SI{' + '%d' %((synee_a['t'][tstart+stepsize] - synee_a['t'][tstart])/second) + '}{s}'
 
 
             syn_a = synee_a['a'][tstart:tstop,:]
@@ -153,7 +153,7 @@ def yasumatsu_graph(bpath, nsp):
         ax.legend(frameon=False, prop={'size': 12})
 
         ax.set_xlabel('synaptic weight')
-        ax.set_ylabel('$\Delta$ synaptic weight')
+        ax.set_ylabel('$\\Delta$ synaptic weight')
 
         ax.axhline(color='grey', zorder=-1.)
 

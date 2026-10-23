@@ -75,6 +75,49 @@ def extract_lifetimes(turnover_data, N_neuron, initial,
     prev_s_id = 0.
     empty_array_count = 0
 
+    def process_synapse(current_synapse):
+        c_array = np.array(current_synapse)
+        ind = np.argsort(c_array[:,1])
+        c_sort = c_array[ind]
+
+        if len(c_sort) == 0:
+            pass
+        elif len(c_sort) == 1:
+            # synapses started at beginning of simulation,
+            # died during the simulation and did not grow
+            # again
+            if initial=='only' and c_sort[0,0]==0:
+                lifetimes.extend([c_sort[0,1]])
+            elif initial=='with' and c_sort[0,0]==0:
+                lifetimes.extend([c_sort[0,1]])
+
+        elif len(c_sort) > 1:
+
+            if c_sort[0,0] == 1:
+                # started with become active,
+                # can use previous method
+                life_death = np.diff(c_sort[:,1])
+
+                # finally add the data
+                if not initial=='only':
+                    lifetimes.extend(life_death[::2])
+                    deathtimes.extend(life_death[1::2])
+
+            elif c_sort[0,0] == 0:
+                #print(c_sort)
+                life_death = np.diff(c_sort[:,1])
+                if initial=='with':
+                    #print(([c_sort[0,1]]),life_death)
+                    life_death = np.concatenate(([c_sort[0,1]],
+                                                life_death))
+                    lifetimes.extend(life_death[::2])
+                    deathtimes.extend(life_death[1::2])
+                elif initial=='only':
+                    lifetimes.extend([c_sort[0,1]])
+                elif initial=='without':
+                    lifetimes.extend(life_death[1::2])
+                    deathtimes.extend(life_death[::2])
+
     for syn_rec in df_sorted:
         # concept:
         #   1. keep collect syn_records as long as pre-synaptic
@@ -86,9 +129,9 @@ def extract_lifetimes(turnover_data, N_neuron, initial,
         #
         #   3. odd entries are the lifetimes, even entries are the
         #   deathtimes
-        
+
         s_id = syn_rec[2] * N_neuron + syn_rec[3]
-        
+
         if not prev_s_id==s_id:
 
             if current_synapse==[]:
@@ -97,52 +140,15 @@ def extract_lifetimes(turnover_data, N_neuron, initial,
                 assert(empty_array_count < 2)
 
             else:
-                c_array = np.array(current_synapse)
-                ind = np.argsort(c_array[:,1])
-                c_sort = c_array[ind]
-
-                if len(c_sort) == 0:
-                    pass
-                elif len(c_sort) == 1:
-                    # synapses started at beginning of simulation,
-                    # died during the simulation and did not grow
-                    # again
-                    if initial=='only' and c_sort[0,0]==0:
-                        lifetimes.extend([c_sort[0,1]])
-                    elif initial=='with' and c_sort[0,0]==0:
-                        lifetimes.extend([c_sort[0,1]])
-                        
-                elif len(c_sort) > 1:
-   
-                    if c_sort[0,0] == 1:
-                        # started with become active,
-                        # can use previous method
-                        life_death = np.diff(c_sort[:,1])
-
-                        # finally add the data
-                        if not initial=='only':
-                            lifetimes.extend(life_death[::2])
-                            deathtimes.extend(life_death[1::2])
-
-                    elif c_sort[0,0] == 0:
-                        #print(c_sort)
-                        life_death = np.diff(c_sort[:,1])
-                        if initial=='with':
-                            #print(([c_sort[0,1]]),life_death)
-                            life_death = np.concatenate(([c_sort[0,1]],
-                                                        life_death))
-                            lifetimes.extend(life_death[::2])
-                            deathtimes.extend(life_death[1::2])
-                        elif initial=='only':
-                            lifetimes.extend([c_sort[0,1]])
-                        elif initial=='without':
-                            lifetimes.extend(life_death[1::2])
-                            deathtimes.extend(life_death[::2])
-                            
+                process_synapse(current_synapse)
                 current_synapse = []
-                
+
         current_synapse.append(list(syn_rec))
         prev_s_id = s_id
+
+    # the last synapse is not followed by a new s_id
+    if current_synapse:
+        process_synapse(current_synapse)
 
     return np.array(lifetimes), np.array(deathtimes)
 
@@ -190,7 +196,8 @@ def extract_active_synapse_count(turnover_data):
     #      time point 0.2 (cn=1,2,3), so "clean up" data to only
     #      take last value (cn=3) for t=0.2.
 
-    y = turnover_data[:,0]
+    # copy, so the caller's turnover data is not modified
+    y = turnover_data[:,0].copy()
     y[y==0]=-1
 
     # appending both starting and endpoints such that for loop

@@ -20,12 +20,12 @@ print("Using {:d} cores".format(ncores))
 
 # fix_pypet_macos()
 
-# check the state of the git repository
-# repo = git.Repo('./src/')
-repo = git.Repo('../../')
-
 commit = None
 if not args.testrun:
+    # check the state of the git repository; simulations run from
+    # running/<timestamp>/, which lives inside the repository
+    repo = git.Repo('.', search_parent_directories=True)
+
     # check for changes, while ignoring submodules
     if repo.git.status('-s', '--ignore-submodules', '--untracked-files=no'):
         raise pex.GitDiffError('Found not committed changes!')

@@ -107,13 +107,15 @@ def t5_raster_figure(bpath, nsp):
 
     axes = axes.flatten()
 
-    axes[0].hist(peaks_participants, bins=np.arange(0,400,1))
+    # one bin per excitatory neuron
+    neuron_bins = np.arange(0, nsp['N_e']+1, 1)
+    axes[0].hist(peaks_participants, bins=neuron_bins)
     axes[0].set_xlabel('neuron index')
     axes[0].set_ylabel('number of participated bursts')
 
     topright_axis_off(axes[0])
 
-    counts, bins = np.histogram(peaks_participants, bins=np.arange(0,400,1))
+    counts, bins = np.histogram(peaks_participants, bins=neuron_bins)
 
     axes[1].hist(counts, np.arange(0, max(counts)+2,5))
 
@@ -185,7 +187,12 @@ def t5_raster_figure(bpath, nsp):
 
     print(np.shape(synee_a['a'][-1]), synee_a['t'][-1])
 
-    A = np.reshape(synee_a['a'][-1], (400,399))
+    # EE synapses are stored source-major for all pairs i != j, build the
+    # full (pre, post) matrix so that A[:,n] are the inputs of neuron n
+    N_e = nsp['N_e']
+    pre, post = np.nonzero(~np.eye(N_e, dtype=bool))
+    A = np.zeros((N_e, N_e))
+    A[pre, post] = synee_a['a'][-1]
 
     # high bursts input distribution
     collect_burst_inputs, burst_sums, burst_ns = [], [], []
@@ -290,13 +297,11 @@ if __name__ == "__main__":
     
     for bpath in build_dirs:
 
-        if bpath == 'builds/0011':
+        try:
+            with open(bpath+'/raw/namespace.p', 'rb') as pfile:
+                nsp=pickle.load(pfile)
 
-            try:
-                with open(bpath+'/raw/namespace.p', 'rb') as pfile:
-                    nsp=pickle.load(pfile)
+            t5_raster_figure(bpath, nsp)
 
-                t5_raster_figure(bpath, nsp)
-
-            except FileNotFoundError:
-                print(bpath[-4:], "reports: No namespace data. Skipping.")
+        except FileNotFoundError:
+            print(bpath[-4:], "reports: No namespace data. Skipping.")

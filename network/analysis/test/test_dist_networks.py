@@ -15,7 +15,7 @@ class Test_extract_survival(unittest.TestCase):
         turnover_data = [[1, 2.5, 0, 0]]
 
         full_t, ex_ids = extract_survival(np.array(turnover_data),
-                                          bin_w, 10, t_split, t_cut)
+                                          10, t_split, t_cut)
 
         self.assertEqual(len(full_t),1)
         self.assertEqual(full_t[0],t_split/second)
@@ -29,7 +29,7 @@ class Test_extract_survival(unittest.TestCase):
                          [0, 4.592, 0, 0]]
 
         full_t, ex_ids = extract_survival(np.array(turnover_data),
-                                          bin_w, 10, t_split, t_cut)
+                                          10, t_split, t_cut)
 
         np.testing.assert_array_almost_equal(full_t, [0.2, 0.792])
 
@@ -43,7 +43,7 @@ class Test_extract_survival(unittest.TestCase):
                          [0, 4.592, 0, 0]]
 
         full_t, ex_ids = extract_survival(np.array(turnover_data),
-                                          bin_w, 10, t_split, t_cut)
+                                          10, t_split, t_cut)
 
         np.testing.assert_array_almost_equal(full_t, [0.2, 0.792])
 
@@ -56,7 +56,7 @@ class Test_extract_survival(unittest.TestCase):
                          [0, 8.6, 0, 0]]
 
         full_t, ex_ids = extract_survival(np.array(turnover_data),
-                                          bin_w, 10, t_split, t_cut)
+                                          10, t_split, t_cut)
 
         # test correct lifetimes
         np.testing.assert_array_almost_equal(full_t, [0.2, 4.8])
@@ -70,7 +70,7 @@ class Test_extract_survival(unittest.TestCase):
                          [1, 8.6, 0, 0]]
 
         full_t, ex_ids = extract_survival(np.array(turnover_data),
-                                          bin_w, 10, t_split, t_cut)
+                                          10, t_split, t_cut)
 
         # test excluded ids
         self.assertEqual(len(ex_ids), 1)
@@ -84,7 +84,7 @@ class Test_extract_survival(unittest.TestCase):
                          [1, 3.8, 0, 0]]
 
         full_t, ex_ids = extract_survival(np.array(turnover_data),
-                                          bin_w, 10, t_split, t_cut)
+                                          10, t_split, t_cut)
 
         np.testing.assert_array_almost_equal(full_t, [0.2, t_split/second])
 
@@ -94,7 +94,7 @@ class Test_extract_survival(unittest.TestCase):
         turnover_data = [[1, 5.9, 0, 0]]
 
         full_t, ex_ids = extract_survival(np.array(turnover_data),
-                                          bin_w, 10, t_split, t_cut)
+                                          10, t_split, t_cut)
 
         np.testing.assert_array_almost_equal(full_t, [5.])
 
@@ -104,7 +104,7 @@ class Test_extract_survival(unittest.TestCase):
         turnover_data = [[1, 7.9, 0, 0]]
 
         full_t, ex_ids = extract_survival(np.array(turnover_data),
-                                          bin_w, 10, t_split, t_cut)
+                                          10, t_split, t_cut)
 
         np.testing.assert_array_almost_equal(full_t, [])
 

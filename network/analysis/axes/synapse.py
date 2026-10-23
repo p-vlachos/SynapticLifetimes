@@ -247,10 +247,10 @@ def synapse_weights_linear(ax, bpath, nsp, tstep, bins, cutoff,
             ax.plot(xs, f_rv.pdf(xs), 'r')
 
         if connections=='EE':
-            ax.set_title('E'+r'$\leftarrow$'+'E weights at t=\SI{'+ \
+            ax.set_title('E'+r'$\leftarrow$'+'E weights at t=\\SI{'+ \
                          str(syn_a['t'][tstep]/second)+'}{s}')
         elif connections=='EI':
-            ax.set_title('E'+r'$\leftarrow$'+'I weights at t=\SI{'+ \
+            ax.set_title('E'+r'$\leftarrow$'+'I weights at t=\\SI{'+ \
                          str(syn_a['t'][tstep]/second)+'}{s}')
 
         ax.set_xlabel('synaptic weight')
@@ -304,10 +304,10 @@ def synapse_weights_log(ax, bpath, nsp, tstep, bins, cutoff, label='',
                         linestyle='-')
 
         if connections=='EE':
-            ax.set_title('E'+r'$\leftarrow$'+'E weights at t=\SI{'+ \
+            ax.set_title('E'+r'$\leftarrow$'+'E weights at t=\\SI{'+ \
                          str(syn_a['t'][tstep]/second)+'}{s}')
         elif connections=='EI':
-            ax.set_title('E'+r'$\leftarrow$'+'I weights at t=\SI{'+ \
+            ax.set_title('E'+r'$\leftarrow$'+'I weights at t=\\SI{'+ \
                          str(syn_a['t'][tstep]/second)+'}{s}')
 
         ax.set_xlabel('log10 of synaptic weight')
@@ -388,7 +388,7 @@ def insP_trace(ax, bpath, nsp):
  
     
     ax.set_xlabel('time [s]')
-    ax.set_ylabel('$p_{\mathrm{insert}}$')
+    ax.set_ylabel('$p_{\\mathrm{insert}}$')
     
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
@@ -421,7 +421,7 @@ def synEEdyn_data(ax, bpath, nsp, when, bins=50):
           
         ax.hist(dsyn_a, bins=bins)
         
-        label = '$\Delta$ synaptic weight in ' + \
+        label = '$\\Delta$ synaptic weight in ' + \
                 r'$dt=\text{\SI{' +\
                 '%d' %(int(nsp['syndynrec_dt']/second)) +\
                 '}{s}}$'
@@ -485,7 +485,7 @@ def synEIdyn_data(ax, bpath, nsp, when, bins=50):
         ax.hist(dsyn_a, bins=bins,
                 color=color, alpha=alpha)
         
-        label = '$\Delta$ synaptic weight in ' + \
+        label = '$\\Delta$ synaptic weight in ' + \
                 r'$dt=\text{\SI{' +\
                 '%d' %(int(nsp['syndynrec_dt']/second)) +\
                 '}{s}}$'

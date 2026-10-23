@@ -46,7 +46,7 @@ def srvprb_EI_figure(bpath):
         centers = (edges[:-1] + edges[1:])/2.
         xx = np.cumsum(counts[::-1])[::-1]/np.sum(counts)
 
-        label = '$P_{\mathrm{growth}} = %.4f$' %(nsp['insert_P'])
+        label = '$P_{\\mathrm{growth}} = %.4f$' %(nsp['insert_P'])
 
         axes[0,0].plot(centers, xx, label=label)
         axes[0,1].plot(centers, xx, label=label)
@@ -191,7 +191,7 @@ def srvprb_EI_figure(bpath):
     axes[2,0].set_xlabel('synaptic weight')
     axes[2,0].set_ylabel('probability density')
 
-    axes[2,1].set_xlabel('$\log_{10}(\mathrm{synaptic\,weight})$')
+    axes[2,1].set_xlabel('$\\log_{10}(\\mathrm{synaptic\\,weight})$')
     axes[2,1].set_ylabel('probability density')
 
     axes[2,1].set_xlim(-4.5,-1)

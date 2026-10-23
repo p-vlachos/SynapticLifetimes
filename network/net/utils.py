@@ -11,12 +11,13 @@ def generate_connections(N_tar, N_src, p, same=False):
       - if not SAME, connect any to any avoididing multiple
     return list of sources i and targets j
     '''
-    nums = np.random.binomial(N_tar-1, p, N_src)
+    nums = np.random.binomial(N_tar-1 if same else N_tar, p, N_src)
     i = np.repeat(np.arange(N_src), nums)
     j = []
     if same:
         for k,n in enumerate(nums):
-            j+=list(np.random.choice([*range(k-1)]+[*range(k+1,N_tar)],
+            # all targets except k itself
+            j+=list(np.random.choice([*range(k)]+[*range(k+1,N_tar)],
                                      size=n, replace=False))
     else:
         for k,n in enumerate(nums):
@@ -33,7 +34,7 @@ def generate_N_connections(N_tar, N_src, N, same=False):
     return list of sources i and targets N_tar*N
     '''
     if same:
-        return NotImplementedError
+        raise NotImplementedError
 
     i = np.array([])
     j = np.repeat(range(N_tar), N)

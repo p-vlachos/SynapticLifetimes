@@ -1,5 +1,5 @@
 
-import sys, os, shutil, pickle, neo, scipy
+import sys, os, shutil, pickle, logging, neo, scipy
 
 from . import models as mod, network_features, network_parameter_derivation
 from .brian2objects.binnedactivitymonitor import BinnedActivityMonitor
@@ -18,6 +18,7 @@ from brian2 import NeuronGroup, StateMonitor, SpikeMonitor, run, \
                    PoissonGroup, PopulationRateMonitor, profiling_summary, \
                    seed
 
+import elephant.utils
 from elephant.conversion import BinnedSpikeTrain
 from elephant.spike_train_correlation import corrcoef, cch
 import quantities as pq
@@ -33,8 +34,6 @@ from .cpp_methods import syn_scale, syn_EI_scale, \
                         #  record_spk, record_spk_EI
 
 from . import workarounds
-
-import brian2cuda
 
 # todo ddcon changes done here
 def init_synapses(syn_type: str, tr: pypet.trajectory.Trajectory, numb_syn: int):
@@ -107,6 +106,7 @@ def run_net(tr, gpu=False):
         prefs.devices.cpp_standalone.openmp_threads = tr.n_threads
 
     if gpu:
+        import brian2cuda  # registers the cuda_standalone device
         set_device('cuda_standalone', directory='./builds/%.4d'%(tr.v_idx), 
                    build_on_run=False)
     else:
@@ -209,7 +209,7 @@ def run_net(tr, gpu=False):
                        threshold ='V > Vt',
                        reset=neuronI_reset, #method=tr.neuron_method,
                        name='GInh', namespace=namespace,
-                       refractory=tr.refractory_exc)
+                       refractory=tr.refractory_inh)
 
     if tr.external_mode=='memnoise':
         # GExc.mu, GInh.mu = [0.*mV] + (tr.N_e-1)*[tr.mu_e], tr.mu_i
@@ -407,7 +407,7 @@ def run_net(tr, gpu=False):
         synEE_mod = '''%s
                        %s''' %(synEE_mod, tr.synEE_scl_mod)
 
-        if tr.scl_mode == "`proport`ional":
+        if tr.scl_mode == "proportional":
             synEE_mod += f"\n{tr.synEE_scl_prop_mod}"
 
     if tr.iscl_active:
@@ -555,7 +555,7 @@ def run_net(tr, gpu=False):
         else:
             print('istrct not active')
             if tr.weight_mode=='init':
-                sEI_src, sEI_tar, _ = generate_connections(tr.N_e, tr.N_i, tr.p_ei)
+                sEI_src, sEI_tar, _, _ = generate_connections(tr.N_e, tr.N_i, tr.p_ei)
                 # print('Index Zero will not get inhibition')
                 # sEI_src, sEI_tar = np.array(sEI_src), np.array(sEI_tar)
                 # sEI_src, sEI_tar = sEI_src[sEI_tar > 0],sEI_tar[sEI_tar > 0]
@@ -641,7 +641,9 @@ def run_net(tr, gpu=False):
                                                                   np.array(GExc.x), np.array(GExc.y),
                                                                   tr.half_width, tr.grid_size, tr.grid_wrap,
                                                                   sparseness=p_ee)
-        SynEE.p_distance = sEE_p.flatten()  # TODO record this in trajectory
+        # sEE_p is the full N_e x N_e matrix (incl. the diagonal), pick
+        # the entries of the synapses in SynEE's order
+        SynEE.p_distance = sEE_p[sEE_src, sEE_tar]  # TODO record this in trajectory
 
         EEactive = np.zeros(shape=(tr.N_e, tr.N_e))
         EEactive[sEE_src_dd, sEE_tar_dd] = 1
@@ -1001,7 +1003,7 @@ def run_net(tr, gpu=False):
         #                          record=[0], when='end')
         # netw_objects.extend([C_stat, insP_stat])
 
-    if tr.istdp_active and tr.adjust_EI_insertP:
+    if tr.istdp_active and tr.istrct_active and tr.adjust_EI_insertP:
 
         C_EI_stat = StateMonitor(sum_target_EI, 'c', dt=tr.csample_dt,
                                  record=[0], when='end')
@@ -1053,10 +1055,8 @@ def run_net(tr, gpu=False):
                            dt=SynEE_a_dt,
                            when='end', order=100)
 
-    if tr.istrct_active:
-        record_range = range(tr.N_e*tr.N_i)  # todo ddcon this I need to fix!
-    else:
-        record_range = range(len(sEI_src))
+    # number of EI synapses: N_e*N_i if istrct is active (without ddcon)
+    record_range = range(len(sEI_src))
 
     if tr.synei_a_nrecpoints>0 and tr.sim.T2>0*second:
         SynEI_a_dt = tr.sim.T2/tr.synei_a_nrecpoints
@@ -1283,7 +1283,7 @@ def run_net(tr, gpu=False):
         # with open(raw_dir+'insP_stat.p','wb') as pfile:
         #     pickle.dump(insP_stat.get_states(),pfile)
 
-    if tr.istdp_active and tr.adjust_EI_insertP:
+    if tr.istdp_active and tr.istrct_active and tr.adjust_EI_insertP:
         with open(raw_dir+'c_EI_stat.p','wb') as pfile:
             pickle.dump(C_EI_stat.get_states(),pfile)   
 
@@ -1325,54 +1325,22 @@ def run_net(tr, gpu=False):
     # ----------------- add raw data ------------------------
     fpath = 'builds/%.4d/'%(tr.v_idx)
 
-    from pathlib import Path
+    # files written by output_files.cpp, with their number of columns
+    # (see cpp_methods.py)
+    for fname, ncols in [('turnover', 4), ('turnover_EI', 4),
+                         ('spk_register', 7), ('spk_register_EI', 7),
+                         ('scaling_deltas', 5), ('scaling_deltas_EI', 5)]:
 
-    Path(fpath+'turnover').touch()
-    turnover_data = np.loadtxt(fpath+'turnover',delimiter=',')
-    os.remove(fpath+'turnover')
+        # the file might not exist or be empty if nothing was recorded;
+        # reshape so that a file with zero or one rows is still 2D
+        data = np.empty((0, ncols))
+        if os.path.exists(fpath+fname):
+            if os.path.getsize(fpath+fname) > 0:
+                data = np.loadtxt(fpath+fname, delimiter=',', ndmin=2)
+            os.remove(fpath+fname)
 
-    with open(raw_dir+'turnover.p','wb') as pfile:
-        pickle.dump(turnover_data,pfile)
-
-
-    Path(fpath+'turnover_EI').touch()
-    turnover_EI_data = np.loadtxt(fpath+'turnover_EI',delimiter=',')
-    os.remove(fpath+'turnover_EI')
-
-    with open(raw_dir+'turnover_EI.p','wb') as pfile:
-        pickle.dump(turnover_EI_data,pfile)   
-
-        
-    Path(fpath+'spk_register').touch()
-    spk_register_data = np.loadtxt(fpath+'spk_register',delimiter=',')
-    os.remove(fpath+'spk_register')
-    
-    with open(raw_dir+'spk_register.p','wb') as pfile:
-        pickle.dump(spk_register_data,pfile)
-
-        
-    Path(fpath+'spk_register_EI').touch()
-    spk_register_EI_data = np.loadtxt(fpath+'spk_register_EI',delimiter=',')
-    os.remove(fpath+'spk_register_EI')
-    
-    with open(raw_dir+'spk_register_EI.p','wb') as pfile:
-        pickle.dump(spk_register_EI_data,pfile)
-
-
-    Path(fpath+'scaling_deltas').touch()
-    scaling_deltas_data = np.loadtxt(fpath+'scaling_deltas',delimiter=',')
-    os.remove(fpath+'scaling_deltas')
-    
-    with open(raw_dir+'scaling_deltas.p','wb') as pfile:
-        pickle.dump(scaling_deltas_data,pfile)
-
-        
-    Path(fpath+'scaling_deltas_EI').touch()
-    scaling_deltas_data = np.loadtxt(fpath+'scaling_deltas_EI',delimiter=',')
-    os.remove(fpath+'scaling_deltas_EI')
-    
-    with open(raw_dir+'scaling_deltas_EI.p','wb') as pfile:
-        pickle.dump(scaling_deltas_data,pfile)
+        with open(raw_dir+fname+'.p','wb') as pfile:
+            pickle.dump(data,pfile)
 
     if tr.netw.profiling:
         with open(raw_dir+'profiling_summary.txt', 'w+') as tfile:
@@ -1383,6 +1351,12 @@ def run_net(tr, gpu=False):
     # --------------- cross-correlations ---------------------
 
     if tr.crs_crrs_rec:
+
+        # spike times lie on the dt grid, i.e. often exactly on bin edges;
+        # elephant correctly shifts them into the next bin but logs a
+        # warning for every single spike train
+        logging.getLogger(elephant.utils.__file__).addFilter(
+            lambda record: 'rounding errors' not in record.getMessage())
 
         GExc_spks = GExc_spks.get_states()
         synee_a = SynEE_a_states
@@ -1407,10 +1381,10 @@ def run_net(tr, gpu=False):
                 if synee_a['syn_active'][-1][f]==1:
 
                     crs_crr, cbin = cch(BinnedSpikeTrain(sts[i],
-                                                         binsize=binsize),
+                                                         bin_size=binsize),
                                         BinnedSpikeTrain(sts[j],
-                                                         binsize=binsize),
-                                        cross_corr_coef=True,
+                                                         bin_size=binsize),
+                                        cross_correlation_coefficient=True,
                                         border_correction=True,
                                         window=(-1*wlen,wlen))
 
@@ -1462,10 +1436,10 @@ def run_net(tr, gpu=False):
                 if synei_a['syn_active'][-1][f]==1:
 
                     crs_crr, cbin = cch(BinnedSpikeTrain(sts_I[i],
-                                                         binsize=binsize),
+                                                         bin_size=binsize),
                                         BinnedSpikeTrain(sts_E[j],
-                                                         binsize=binsize),
-                                        cross_corr_coef=True,
+                                                         bin_size=binsize),
+                                        cross_correlation_coefficient=True,
                                         border_correction=True,
                                         window=(-1*wlen,wlen))
 

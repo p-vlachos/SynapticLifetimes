@@ -63,7 +63,7 @@ def branching_ratio_verification_figure(bpath):
 
 
     tbl = axs['2,1'].table(loc="center",
-                           cellText=(("$\Delta{}t$", str(bin_w)),
+                           cellText=(("$\\Delta{}t$", str(bin_w)),
                                      ("Estimates over all sections", ""),
                                      ("mre", f"{ft.mre:0.6f}"),
                                      ("mre (complex)", f"{complex_fit.mre:0.6f}"),
@@ -86,7 +86,7 @@ def branching_ratio_verification_figure(bpath):
     axs['1,2'].legend()
     axs['1,2'].set_title(f"Branching Factor per Section")
     axs['1,2'].set_xlabel("$section number$")
-    axs['1,2'].set_ylabel("$\hat{m}$")
+    axs['1,2'].set_ylabel("$\\hat{m}$")
     axs['1,2'].set_ylim(0, 1.2)
 
     # smoothed firing rate

@@ -119,7 +119,7 @@ def branching_ratio_figure(bpath):
     complex_fit = mre.fit(rk, fitfunc=mre.f_complex)
 
     tbl = axs['2,1'].table(loc="center",
-                           cellText=(("$\Delta{}t$", str(bin_w)),
+                           cellText=(("$\\Delta{}t$", str(bin_w)),
                                      ("mre", f"{ft.mre:0.6f}"),
                                      ("mre (complex)", f"{complex_fit.mre:0.6f}"),
                                      ("$H_{offset}$", H_offset_rej),
@@ -153,9 +153,9 @@ def branching_ratio_figure(bpath):
     axs['1,2'].plot(bin_scales, fits, label="actual", linestyle="None", marker="D", markersize=markersize)
     axs['1,2'].plot(bin_scales, fits_expected, label="expected", linestyle="None", marker="P", markersize=markersize)
     axs['1,2'].legend()
-    axs['1,2'].set_title(f"$actual=m(binsize=k\\Delta{{}}t)=m(binsize=\\Delta{{}}t)^k=expected$, $\Delta{{}}t={bin_w}$")
+    axs['1,2'].set_title(f"$actual=m(binsize=k\\Delta{{}}t)=m(binsize=\\Delta{{}}t)^k=expected$, $\\Delta{{}}t={bin_w}$")
     axs['1,2'].set_xlabel("$k$")
-    axs['1,2'].set_ylabel("$\hat{m}$")
+    axs['1,2'].set_ylabel("$\\hat{m}$")
 
     # total activity per bin
     axs['2,2'].bar(bins[1:]/1000, counts, width=0.0001, facecolor="tab:blue", edgecolor="tab:blue")

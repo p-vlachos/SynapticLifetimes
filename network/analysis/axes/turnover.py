@@ -31,8 +31,9 @@ def lifetime_distribution_loglog(ax, bpath, nsp, bins,
 
 
     if not len(turnover) == 0:
-        
-        _lt, _dt = extract_lifetimes(turnover, nsp['N_e'], with_starters=with_starters)
+
+        _lt, _dt = extract_lifetimes(turnover, nsp['N_e'],
+                                     initial='with' if with_starters else 'without')
         life_t, death_t = _lt*second, _dt*second
 
         if len(life_t) == 0:
@@ -45,7 +46,7 @@ def lifetime_distribution_loglog(ax, bpath, nsp, bins,
             label = ''
             if label_key!='':
                 label=  r'$\text{' + label_key +\
-                        '} = %f $' %(getattr(tr, label_key))
+                        '} = %f $' %(nsp[label_key])
                 
             ax.hist(life_t/ms, 10**bins, log=True, density=True, label=label)
 
@@ -92,7 +93,11 @@ def lifetime_distribution_loglog_linear_bins(ax, bpath, nsp, bin_w,
         #             r'} = \text{'+'%.2E' %(Decimal(getattr(tr, label_key))) +\
         #             r'}$'
 
-        ax.plot(centers, counts, '.', markersize=2., label=label)#,
+        # empty bins cannot be shown on log-log axes, and matplotlib
+        # fails to log-scale an axis that was given an empty plot
+        nonzero = counts > 0
+        if np.any(nonzero):
+            ax.plot(centers[nonzero], counts[nonzero], '.', markersize=2., label=label)#,
                 #color=pl.cm.Greens(np.linspace(0.2,1,5)[n_color]))
 
         if fit and len(life_t)>25:
@@ -144,7 +149,7 @@ def lifetime_distribution_loglog_linear_bins(ax, bpath, nsp, bin_w,
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_title('synapse lifetimes (' + \
-                 r'$\text{bin width} = \text{\SI{%d}{s}}$)' % (int(bin_w/second)))
+                 r'$\text{bin width} = \text{\SI{%g}{s}}$)' % (float(bin_w/second)))
     ax.set_xlabel('synapse lifetime [s]')
 
     if density:
@@ -161,8 +166,8 @@ def lifetime_distribution_loglog_linear_bins(ax, bpath, nsp, bin_w,
 
 
 def lifetime_distribution_loglog_add_fit(axs, bpath, nsp, discard_t,
-                                         with_starters):
-    ''' 
+                                         initial):
+    '''
     discard all values until discard_t
     '''
     if discard_t!=0.:
@@ -176,13 +181,14 @@ def lifetime_distribution_loglog_add_fit(axs, bpath, nsp, discard_t,
 
 
     if not len(turnover) == 0:
-    
-        _lt, _dt = extract_lifetimes(turnover, nsp['N_e'], with_starters)
+
+        _lt, _dt = extract_lifetimes(turnover, nsp['N_e'], initial=initial,
+                                     t_cut=discard_t)
         life_t, death_t = _lt*second, _dt*second
 
         if len(life_t)>25:
-                                         
-            fit = powerlaw.Fit(life_t/ms, discrete=True)
+            # in seconds, same as the histograms these axes show
+            fit = powerlaw.Fit(life_t/second, discrete=True)
             alpha = fit.power_law.alpha
 
             for ax in axs:

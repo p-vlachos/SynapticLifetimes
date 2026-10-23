@@ -114,7 +114,7 @@ class SrvPrbBranching(MultiSimPlotRunner):
             chi_input_data.append(avg)
 
         group_info = [(label, len(dfs), np.mean(mres[label]), np.std(mres[label])) for label, dfs in data.items() if label in mres]
-        group_info_str = [f"{label}: N={no:2d}, $\hat{{m}}={mean:.2f}\pm{std:.2f}$" for label, no, mean, std in group_info if label in mres]
+        group_info_str = [f"{label}: N={no:2d}, $\\hat{{m}}={mean:.2f}\\pm{std:.2f}$" for label, no, mean, std in group_info if label in mres]
         ax.legend(loc="lower left", fontsize=12)
         # ax.text(1.0, -0.25, '\n'.join(group_info_str), transform=ax.transAxes, ha='right')
         ax.set_xlabel("survival time [s]", fontsize=fontsize)

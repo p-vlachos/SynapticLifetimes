@@ -27,21 +27,19 @@ def post_process_turnover(tr, connections='EE', binning=True, from_numpy=False, 
     t_cut = tr.pp_tcut
     t_split = (tr.T1+tr.T2+tr.T3+tr.T4-t_cut)/2.
 
+    if turnover is None:
+        if from_numpy:
+            turnover = np.load('builds/%.4d/raw/turnover%s.npz'%(tr.v_idx,cn))['turnover']
+        else:
+            with open('builds/%.4d/raw/turnover%s.p' %(tr.v_idx,cn), 'rb') as pfile:
+                turnover = pickle.load(pfile)
+
+    # abort if turnover empty
+    if len(turnover)==0:
+        return
+
     if t_split/second > 0:
 
-        # E<-E connections
-
-        if turnover is None:
-            if from_numpy:
-                turnover = np.load('builds/%.4d/raw/turnover%s.npz'%(tr.v_idx,cn))['turnover']
-            else:
-                with open('builds/%.4d/raw/turnover%s.p' %(tr.v_idx,cn), 'rb') as pfile:
-                    turnover = pickle.load(pfile)
-
-        # abort if turnover empty
-        if len(turnover)==0:
-            return
-        
         # tr.N_e only used for s_id creation,
         # and since tr.N_i > tr.N_e,
         # tr.NE is correct for both 'EE' & 'EI'

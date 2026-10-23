@@ -35,7 +35,7 @@ def yasumatsu_plot(bpath, nsp):
 
         for tstart,tstop in [(5,6)]:
 
-            label = 't=\SI{' + '%d' %((synee_a['t'][tstop] - synee_a['t'][tstart])/second) + '}{s}' 
+            label = 't=\\SI{' + '%d' %((synee_a['t'][tstop] - synee_a['t'][tstart])/second) + '}{s}' 
             
             bin_w, cutoff = 1*second, 0
 
@@ -88,9 +88,9 @@ def yasumatsu_plot(bpath, nsp):
 
 
     axes[0].set_xlabel('synaptic weight')
-    axes[0].set_ylabel('$\Delta$ synaptic weight')
+    axes[0].set_ylabel('$\\Delta$ synaptic weight')
 
-    axes[1].set_xlabel('$\log_{10}(\mathrm{synaptic\,weight})$')
+    axes[1].set_xlabel('$\\log_{10}(\\mathrm{synaptic\\,weight})$')
     axes[1].set_ylabel('probability density')
 
     # axes[0].set_xlim(left=0)

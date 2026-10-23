@@ -6,8 +6,15 @@ Original at https://github.com/synsrv/src_net.
 Network simulation using Brian 2 and Pypet written to analyse the survivability of transient synapses of cortical neurons.
 
 ** Requirements
-To run the network simulation a Python 3 environment with Brian 2 (with patches), and Pypet is required. Git also has to be installed.
-Detailed dependencies are listed in ~environment.yml~.
+To run the network simulation a Python 3.12 environment with Brian 2 and Pypet is required.
+The pinned dependencies are listed in ~environment.yml~; the upstream Brian2 release from PyPI is
+used, no patched Brian2 version is needed anymore.
+
+In addition, the following has to be installed on the system:
+- Git
+- a C++ compiler (~g++~), used by Brian2's ~cpp_standalone~ device
+- LaTeX with the ~tgheros~, ~sansmath~ and ~siunitx~ packages, used for the figures
+
 Below is an example installation routine for setting up a conda environment.
 This assumes that you already have anaconda or miniconda installed.
 
@@ -15,36 +22,13 @@ This assumes that you already have anaconda or miniconda installed.
 #!/bin/sh
 
 conda env create -f environment.yml
-conda activate excinhbal
+conda activate synlife
 
 #+END_SRC
 
-This will also install Brian2 with patches.
-
-*** Brian2 Patches
-Brian2 patches are required for long simulations.
-We maintain our own repository of Brian2 with patches applied:
-[[https://github.com/excinhbal/brian2/branches]]
-
-In order to upgrade Brian2 to an up-to-date version:
-1. clone our Brian2 repository
-2. ~git remote add upstream https://github.com/brian-team/brian2.git~
-3. ~git fetch upstream~
-4. ~git checkout origin/<our most up to date branch> -b <new release tag>__excinhbal_fixes~
-5. ~git rebase <new release tag>~
-6. fix conflicts
-7. ~git log~ should now show a few commits like this https://github.com/excinhbal/brian2/commit/b3c7d3adadabb7d4f0b4b70dca818787a7714900
-   as newest commits of the branch and the next oldest commit should be the Brian2 release commit of the version that you wanted to upgrade to
-7. push the new branch to origin (our Brian2 repository)
-8. edit this repository's ~requirements.txt~ to point to the new branch
-
-For details about the patches check out [[https://github.com/brian-team/brian2/pull/1057][#1057]].
+For simulations on the GPU (~run.sh -g~), additionally ~pip install brian2cuda~.
 
 ** Installation
-
-Get the code from this repository including submodules with
-
-: git clone  --recurse-submodules https://github.com/excinhbal/network
 
 It is highly recommended to limit the level of parallelization when building the standalone_cpp simulator.
 In ~$HOME/.brian/user_preferences~ write, where ~4~ is the number of CPU cores your PC has:
@@ -72,10 +56,13 @@ To run simulations exploring different parameter sets, create an ~explored_param
 
 This will create ~running/~ and ~completed/~ directories on the same level as ~src_net/~. Once finished, the simulation directory is moved from ~running/~ to ~completed/~.
 
+Runs started with ~-E~ record the git commit and refuse to start if there are uncommitted changes, so commit your ~explored_params.py~ first.
+
 ** Run tests
 
-There are multiple sets of tests currently, they fall in two broad categories:
+There are multiple sets of tests currently, they fall in three broad categories:
 1. tests that can be run with ~pytest~: ~pytest tests/pytests~
-2. all other tests, which can be run using ~./run_tests.sh~ as shown above
+2. unit tests of the analysis methods, run from within ~analysis/~: ~PYTHONPATH=. pytest test~
+3. all other tests, which can be run using ~./run_test.sh~ as shown above
 
 

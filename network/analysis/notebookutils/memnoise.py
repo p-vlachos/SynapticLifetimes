@@ -29,7 +29,7 @@ def treshold(ax: plt.Axes, Vt=-50*mV, mu=8.0*mV, sigma=0.0*mV, T=100*ms):
 
     ax.set_ylim(-60, -49.5)
     ax.hlines(Vt/mV, xmin=0, xmax=T/ms, color="red", label="firing threshold")
-    ax.hlines((El+mu)/mV, xmin=0, xmax=T/ms, color="green", ls="-", label="$\mu$")
+    ax.hlines((El+mu)/mV, xmin=0, xmax=T/ms, color="green", ls="-", label="$\\mu$")
     ax.plot(M.t/ms, M.V.T/mV, label="membrane potential")
     ax.set_ylabel("V [mV]")
     ax.set_xlabel("t [ms]")
