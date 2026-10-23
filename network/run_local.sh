@@ -19,24 +19,13 @@ else
 fi
 
 
-# $9 is "true"/"false" (GPU) for normal runs, but the test directory for net-tests
-if [ "$9" == "true" ]; then
-    GPUFLAG='--gpu'
-else
-    GPUFLAG=''
-fi
-
 if $6
 then
    echo "doing local"
-   PYTHONPATH="$PWD/src" python -m net.xstrct_run -c $3 $TESTFLAG $GPUFLAG
+   PYTHONPATH="$PWD/src" python -m net.xstrct_run -c $3 $TESTFLAG
 else
    echo "doing nonlocal"
-   if [ "$GPUFLAG" == "" ]; then
-    PYTHONPATH="$PWD/src" srun --hint=memory_bound -p $7 -c $4 --mem $5 --time 29-00 python -m net.xstrct_run -c $3 $TESTFLAG
-   else
-    PYTHONPATH="$PWD/src" srun --hint=memory_bound -p $7 --nodelist=jetski --gres=gpu:rtx2080ti:1 --reservation=triesch-shared --mem $5 --time 29-00 python -m net.xstrct_run -c $3 $TESTFLAG --gpu
-   fi
+   PYTHONPATH="$PWD/src" srun --hint=memory_bound -p $7 -c $4 --mem $5 --time 29-00 python -m net.xstrct_run -c $3 $TESTFLAG
 fi
 
 # # with multiprocessing. currently defunct because of a problem

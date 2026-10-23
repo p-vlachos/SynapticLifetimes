@@ -10,9 +10,8 @@ TESTDIR_FULL=''
 DEBUG=false
 CLUSTER='x-men'
 DESCRIPTION=''
-GPU="false"
 
-while getopts "hln:c:m:P:Edsg" opt; do
+while getopts "hln:c:m:P:Eds" opt; do
     case $opt in
     h) echo "usage: $0 [-h] [-a] [-l] ..."; exit ;;
     l) LOCAL_COMPUTE=true ;;    # run it locally (if false put on cluster)
@@ -23,7 +22,6 @@ while getopts "hln:c:m:P:Edsg" opt; do
     d) DEBUG=true ;;    # Do not go in background but run in terminal
     s) CLUSTER='sleuths' ;; # cluster name
     P) POSTFIX=$OPTARG ;; # Give a name
-    g) GPU="true" ;; # Run on gpu
     \?) echo "error: option -$OPTARG is not implemented"; exit ;;
     esac
 done
@@ -89,23 +87,10 @@ then
    echo "debug mode" 
    ./src/run_local.sh $TIMESTAMP $CODEDIR $NPARSIM \
                           $NCORES $MEMGB $LOCAL_COMPUTE \
-                          $CLUSTER $TESTRUN $GPU
+                          $CLUSTER $TESTRUN
 else
     echo "normal mode"
     nohup ./src/run_local.sh $TIMESTAMP $CODEDIR $NPARSIM \
                           $NCORES $MEMGB $LOCAL_COMPUTE \
-                          $CLUSTER $TESTRUN $GPU &
-    # nohup ./notwork/run_local.sh $TIMESTAMP $CODEDIR $NPARSIM \
-    #                       $NCORES $MEMGB $LOCAL_COMPUTE \
-    #                       $CLUSTER $TESTRUN $GPU &
+                          $CLUSTER $TESTRUN &
 fi
-
-# # touch $CODEDIR/../$TIMESTAMP
-
-
-# # run via sbatch -p x-men -c <ncores> --mem 32GB run.sh <ncores>
-
-# # echo "START"
-# # running -p x-men -c $1 --mem 32GB python stdp_scl_it_strct_run.py -c $1
-# # echo "END"
-# # touch end.org

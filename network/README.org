@@ -26,8 +26,6 @@ conda activate synlife
 
 #+END_SRC
 
-For simulations on the GPU (~run.sh -g~), additionally ~pip install brian2cuda~.
-
 ** Installation
 
 It is highly recommended to limit the level of parallelization when building the standalone_cpp simulator.

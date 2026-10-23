@@ -29,10 +29,6 @@ from .cpp_methods import syn_scale, syn_EI_scale, \
                          record_turnover, record_turnover_EI, \
                          record_spk, record_spk_EI
 
-# from .cuda_methods import syn_scale, syn_EI_scale, \
-                        #  record_turnover, record_turnover_EI, \
-                        #  record_spk, record_spk_EI
-
 from . import workarounds
 
 # todo ddcon changes done here
@@ -98,20 +94,15 @@ def init_synapses(syn_type: str, tr: pypet.trajectory.Trajectory, numb_syn: int)
     return initial_active, initial_weights
 
     
-def run_net(tr, gpu=False):
+def run_net(tr):
 
     # prefs.codegen.target = 'numpy'
     # prefs.codegen.target = 'cython'
     if tr.n_threads > 1:
         prefs.devices.cpp_standalone.openmp_threads = tr.n_threads
 
-    if gpu:
-        import brian2cuda  # registers the cuda_standalone device
-        set_device('cuda_standalone', directory='./builds/%.4d'%(tr.v_idx), 
-                   build_on_run=False)
-    else:
-        set_device('cpp_standalone', directory='./builds/%.4d'%(tr.v_idx),
-                   build_on_run=False)        
+    set_device('cpp_standalone', directory='./builds/%.4d'%(tr.v_idx),
+               build_on_run=False)
 
 
     # set brian 2 and numpy random seeds

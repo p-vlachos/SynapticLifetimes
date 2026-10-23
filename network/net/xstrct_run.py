@@ -11,7 +11,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--ncores", "-c", help="No. cores", nargs=1)
 parser.add_argument("--testrun", "-t", action='store_true')
 parser.add_argument("--postprocess", "-x", action='store_true')
-parser.add_argument("--gpu", default=False, action='store_true')
 args = parser.parse_args()
 # control the number of cores to be used for computation
 ncores = int(args.ncores[0])
@@ -38,6 +37,5 @@ main(
     ncores=ncores,
     testrun=args.testrun,
     explore_dict=explore_dict,
-    commit=commit,
-    gpu=args.gpu
+    commit=commit
 )

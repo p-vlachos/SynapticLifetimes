@@ -8,7 +8,7 @@ from .xstrct_netw import run_net
 from .post_processing import post_process
 
 
-def main(name, explore_dict, postprocess=False, ncores=1, testrun=False, commit=None, gpu=False):
+def main(name, explore_dict, postprocess=False, ncores=1, testrun=False, commit=None):
 
     if not testrun:
         if commit is None:
@@ -47,7 +47,7 @@ def main(name, explore_dict, postprocess=False, ncores=1, testrun=False, commit=
 
     def run_sim(tr):
         try:
-            run_net(tr, gpu=gpu)
+            run_net(tr)
         except TimeoutError:
             print("Unable to plot, must run analysis manually")
 

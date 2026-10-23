@@ -28,5 +28,3 @@ dependencies:
     - mrestimator==0.2.0
     - gitpython==3.2.1
     - pytest==9.1.1
-    # optional, only needed for --gpu runs (cuda_standalone device):
-    # - brian2cuda
