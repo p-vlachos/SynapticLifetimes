@@ -50,3 +50,16 @@ def topright_axis_off(ax):
 if __name__ == "__main__":
     
     convert_to_adjacency_matrix([0,1], 2)
+
+
+def linear_scale_for_empty_log_axes(fig):
+    '''
+    matplotlib cannot lay out a log-scaled axis without positive data
+    (e.g. no lifetimes in a short simulation); show such axes with a
+    linear scale instead
+    '''
+    for ax in fig.axes:
+        if ax.get_xscale() == 'log' and not np.isfinite(ax.dataLim.minposx):
+            ax.set_xscale('linear')
+        if ax.get_yscale() == 'log' and not np.isfinite(ax.dataLim.minposy):
+            ax.set_yscale('linear')

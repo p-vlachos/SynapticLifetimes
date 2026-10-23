@@ -35,8 +35,9 @@ def get_insert_and_prune_counts(turnover_data, N_neuron, t_cut, Tmax):
   
     bins = np.arange(0, N_neuron+1, 1)
 
-    assert(np.max(insert_events) <= N_neuron)
-    assert(np.max(prune_events) <= N_neuron)
+    # there might be no events of one kind (e.g. short simulations)
+    assert(np.all(insert_events < N_neuron))
+    assert(np.all(prune_events < N_neuron))
 
     insert_counts, bins =np.histogram(insert_events,
                                       bins=bins, density=False)

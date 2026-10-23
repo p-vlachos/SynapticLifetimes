@@ -18,6 +18,8 @@ import sys, os, itertools, pickle
 import numpy as np
 from brian2.units import second
 
+from .utils import linear_scale_for_empty_log_axes
+
 
 def srvprb_all_figure(bpath):
     
@@ -296,6 +298,7 @@ def srvprb_all_figure(bpath):
 
     # axes[1,1].set_ylim(top=1.05)
 
+    linear_scale_for_empty_log_axes(fig)
     fig.tight_layout(rect=[0., 0., 1, 0.95])
 
     directory = "figures/srvprb_all"
