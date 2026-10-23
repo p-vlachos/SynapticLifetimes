@@ -1,3 +1,7 @@
+# Kept for reference only: these parameters use Kesten synaptic noise
+# (syn_noise_type='kesten', syn_kesten_*), which has been removed from the
+# model, so this file cannot be run anymore.
+
 from brian2.units import ms, mV, second, ksecond, Hz, um
 from .param_tools import *
 import numpy as np

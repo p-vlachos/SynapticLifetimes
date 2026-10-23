@@ -228,25 +228,11 @@ refractory_inh = "False"
 syn_noise = 1
 """enable/disable synapse noise"""
 syn_noise_type = 'additive'
-"""can be either ``additive``, ``multiplicative``, ``kesten`` (Hazan & Ziv 2020) or ``decay``."""
+"""can be either ``additive`` or ``multiplicative``."""
 syn_sigma = 1e-09/second
 """synapse noise sigma"""
 synEE_mod_dt = 100*ms
 """dt between update of state variables"""
-
-# kesten noise
-syn_kesten_mu_epsilon_1 = 0.0/second
-"""for <epsilon-1>, see Hazan & Ziv 2020 in The Journal of Neuroscience"""
-syn_kesten_mu_eta = 0.0/second
-"""for <eta>, see Hazan & Ziv 2020 in The Journal of Neuroscience"""
-syn_kesten_var_epsilon_1 = 0.0/second
-"""for sigma_{epsilon-1}, see Hazan & Ziv 2020 in The Journal of Neuroscience"""
-syn_kesten_var_eta = 0.0/second
-"""for sigma_{eta}, see Hazan & Ziv 2020 in The Journal of Neuroscience"""
-syn_kesten_factor = 1
-"""multiplies weights by factor before applying Kesten noise, then transforms them back"""
-syn_kesten_inh = 0
-"""Enable Kesten noise on EI synapses."""
 
 #STDP
 stdp_active = 1
@@ -358,9 +344,6 @@ p_inactivate = 0.01
 """
 strct_c = 0.002
 """threshold for ``zero`` mode"""
-
-tau_adecay = 100*second
-""" Weight decay, inspired by Zenke et al 2013. Biologically in the order of hours. """
 
 # inhibitory structural plasticity
 istrct_active = 0

@@ -378,12 +378,8 @@ def run_net(tr):
             synEI_mod = '''%s 
                            %s''' %(tr.synEE_noise_mult, tr.synEE_mod)
 
-        elif tr.syn_noise_type == 'kesten':
-            synEE_mod = f"{tr.synEE_mod}\n{tr.synEE_noise_kesten}"
-            synEI_mod = f"{tr.synEE_mod}\n{tr.synEI_noise_kesten}"
-        elif tr.syn_noise_type == 'decay':
-            synEE_mod = f"{tr.synEE_mod}\n{tr.synEE_noise_decay}"
-            synEI_mod = f"{tr.synEE_mod}\n{tr.synEI_noise_decay}"
+        else:
+            raise ValueError(f"Invalid syn_noise_type {tr.syn_noise_type}")
     else:
         synEE_mod = '''%s 
                        %s''' %(tr.synEE_static, tr.synEE_mod)
@@ -597,14 +593,12 @@ def run_net(tr):
 
 
     if tr.syn_noise:
-        if tr.syn_noise_type != "kesten" and tr.syn_noise_type != "decay":
-            SynEE.syn_sigma = tr.syn_sigma
+        SynEE.syn_sigma = tr.syn_sigma
         SynEE.run_regularly('a = syn_active*clip(a,amin,amax)', when='after_groups',
-                            name='SynEE_noise_clipper') 
+                            name='SynEE_noise_clipper')
 
     if tr.syn_noise and tr.istdp_active:
-        if tr.syn_noise_type != "kesten" and tr.syn_noise_type != "decay":
-            SynEI.syn_sigma = tr.syn_sigma
+        SynEI.syn_sigma = tr.syn_sigma
         SynEI.run_regularly('a = syn_active*clip(a,amin_i,amax_i)', when='after_groups',
                             name='SynEI_noise_clipper') 
 
@@ -624,7 +618,8 @@ def run_net(tr):
         SynEI.stdp_active=1
         SynEI.amin = tr.amin_i if tr.amin_i >= 0 else tr.amin
         SynEI.amax = tr.amax_i if tr.amax_i >= 0 else tr.amax
-        SynEI.syn_noise_active = int(tr.syn_kesten_inh or tr.syn_noise_type == "decay")
+        # EI synapses have the noise equations, but the noise is switched off
+        SynEI.syn_noise_active = 0
 
     if tr.ddcon_active:
         p_ee = tr.p_ee if tr.p_ee_init == 0.0 else tr.p_ee_init

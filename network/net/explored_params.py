@@ -75,16 +75,7 @@ input_dict = {'T1': [10 * second],
               'tau_i': [10*ms],
 
               'syn_noise': [1],
-              'syn_noise_type': ['additive'],   # 'kesten'
-              'syn_kesten_mu_epsilon_1': [-0.062/second],
-              'syn_kesten_mu_eta': [0.0058/second],
-              'syn_kesten_var_epsilon_1': [0.001/second],
-              'syn_kesten_var_eta': [0.00006/second],
-              'syn_kesten_inh': [0],            # If Kesten is used
-              'syn_kesten_mu_epsilon_1_i': [-0.1/second],
-              'syn_kesten_mu_eta_i': [0.006/second],
-              'syn_kesten_var_epsilon_1_i': [0.001/second],
-              'syn_kesten_var_eta_i': [0.00001/second],
+              'syn_noise_type': ['additive'],   # or 'multiplicative'
 
               # Plasticity parameters
               # --- STDP ---
