@@ -71,18 +71,6 @@ def fourier_data(ax1, ax2, colormap, dt, nsp, spk_count, nperseg = 10240):
     ax2.legend()
 
 
-def fourier_loglog_single(ax2, dt, nsp, spk_count, color, label, nperseg = 10240):
-    start_i = int((nsp['T1'] + nsp['T2'] + nsp['T3'] + nsp['T4']) / ms / (dt / ms))
-    end_i = int((nsp['T1'] + nsp['T2'] + nsp['T3'] + nsp['T4'] + nsp['T5']) / ms / (dt / ms))
-    xs, ys = welch(spk_count[start_i:end_i], fs=(dt ** -1) / Hz, nperseg=nperseg)
-    indices = np.logical_and(xs > 0, xs <= 1000)  # we only want up to 1 kHz
-    xs, ys = xs[indices], ys[indices]
-    ax2.loglog(xs, ys, label=label, color=color)
-    ax2.set_ylabel("log density")
-    ax2.set_xlabel("log frequency [Hz]")
-    ax2.legend()
-
-
 def plot_smoothed_rate(axr, bpath, nsp):
     with open(bpath+'/raw/gexc_rate.p', 'rb') as pfile:
         rate = pickle.load(pfile)

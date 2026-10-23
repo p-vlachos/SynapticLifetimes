@@ -45,25 +45,6 @@ def calc_isi(spks, tmin, tmax, i):
     return isi
 
 
-def plot_isi_per_neuron(ax, nsp, spks, tmin, tmax, n_neurons = 3):
-    neurons, counts = np.unique(spks["i"], return_counts=True)
-    sort_nc = sorted(zip(neurons, counts), key=lambda x: x[1], reverse=True)
-    neurons, counts = zip(*sort_nc)
-
-    neurons, counts = neurons[:n_neurons], counts[:n_neurons]
-    for i in neurons:
-        isi = calc_isi(spks, tmin, tmax, i)
-        bins = np.arange(0.0, np.max(isi) + ISI_BIN_WIDTH/ms, ISI_BIN_WIDTH/ms)
-        ax.hist(isi, histtype="step", label=f"neuron {i:4d}", bins=bins)
-    ax.set_xlabel("ISI [ms]")
-    ax.set_ylabel("count")
-    ax.set_title("Inter Spike Interval of highest frequency exc. neurons")
-    ax.set_xticks(np.arange(0, XMAX, 10), minor=True)
-    ax.set_xticks(np.arange(0, XMAX+1, 250), minor=False)
-    ax.set_xlim(0, XMAX)
-    ax.legend()
-
-
 def plot_isi_all(ax, nsp, spks, tmin, tmax, xmax=XMAX):
     isis = []
 

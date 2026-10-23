@@ -142,9 +142,3 @@ def extract_survival(turnover_data: np.ndarray, N_neuron: int, t_split, t_cut: b
     return full_t, excluded_ids
 
 
-def convert_full_t_to_srv_prb(full_t, t_max, bin_w):
-    bins = np.arange(bin_w, t_max + bin_w, bin_w)
-
-    counts, edges = np.histogram(full, bins=bins, density=False)
-
-    np.cumsum(counts[::-1])[::-1]
