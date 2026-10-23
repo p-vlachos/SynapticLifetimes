@@ -25,6 +25,8 @@ def add_params(tr):
     # synaptic delays
     tr.f_add_parameter("netw.config.syn_delay_active", prm.syn_delay_active)
     tr.f_add_parameter("netw.config.syn_dd_delay_active", prm.syn_dd_delay_active)
+    tr.f_add_parameter("netw.syn_dd_delay_velocity", prm.syn_dd_delay_velocity)
+    tr.f_add_parameter("netw.syn_dd_delay_rel_sd", prm.syn_dd_delay_rel_sd)
     tr.f_add_parameter("netw.synEE_delay", prm.synEE_delay)
     tr.f_add_parameter("netw.synEE_delay_windowsize", prm.synEE_delay_windowsize)
     tr.f_add_parameter("netw.synEI_delay", prm.synEI_delay)
@@ -69,9 +71,6 @@ def add_params(tr):
     tr.f_add_parameter('netw.a_IPoi',  prm.a_IPoi)
     tr.f_add_parameter('netw.PInp_rate',  prm.PInp_rate)
     tr.f_add_parameter('netw.PInp_inh_rate',  prm.PInp_inh_rate)
-    tr.f_add_parameter('netw.p_EPoi',  prm.p_EPoi)
-    tr.f_add_parameter('netw.p_IPoi',  prm.p_IPoi)
-    tr.f_add_parameter('netw.poisson_mod',  mod.poisson_mod)
 
     tr.f_add_parameter('netw.refractory_exc', prm.refractory_exc)
     tr.f_add_parameter('netw.refractory_inh', prm.refractory_inh)

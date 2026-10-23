@@ -54,7 +54,11 @@ sigma_i = 0.5**0.5*mV
 syn_delay_active = 0
 """ enables pre-synaptic delays """
 syn_dd_delay_active = 0
-""" enables distance-dependent pre-synaptic delays """
+""" enables distance-dependent pre-synaptic delays (requires ddcon_active) """
+syn_dd_delay_velocity = 150*um/ms
+""" action potential velocity, the mean delay of a synapse is distance/velocity """
+syn_dd_delay_rel_sd = 0.1
+""" standard deviation of distance-dependent delays, relative to their mean """
 synEE_delay = 4.7*ms
 """ for EE synapses, according to biexp peak time with standard params """
 synEE_delay_windowsize = 0*ms
@@ -111,7 +115,7 @@ tau_r = 15*second
 """ Time constant of postsynaptic firing rate average decay. """
 
 external_mode = 'memnoise'
-"""Either 'memnoise' or 'poisson' but latter seems to be unimplemented"""
+"""Either 'memnoise' (membrane noise, see mu_e, sigma_e, ...) or 'poisson' (Poisson spike trains, see PInp_*, a_EPoi, a_IPoi)"""
 
 # poisson 
 # NOTES: Poissonian input as it is now it is either independent for each neuron (1-to-1) or from a pool of neurons
@@ -131,11 +135,9 @@ PInp_rate = 1270*Hz
 PInp_inh_rate = 1250*Hz
 """Firing rate of Poisson input to inhibitory neurons"""
 a_EPoi = 0.005
-"""Parameter for ``external_mode``=``poisson``"""
-a_IPoi = 0.
-"""Parameter for ``external_mode``=``poisson``"""
-p_EPoi = 0.2  # unused
-p_IPoi = 0.1  # unused
+"""Weight of the Poisson input synapses onto excitatory neurons (``external_mode``=``poisson``)"""
+a_IPoi = 0.005
+"""Weight of the Poisson input synapses onto inhibitory neurons (``external_mode``=``poisson``)"""
 
 refractory_exc = "False"
 """

@@ -58,7 +58,6 @@ nrnEE_thrshld = 'V > Vt'
 
 nrnEE_reset = 'V = Vr_e'
 
-poisson_mod = 'PInp_a : 1'
 
 synEE_static = 'a : 1'
 synEE_noise_add   = '''da/dt = syn_noise_active*syn_active*syn_sigma**0.5*xi : 1

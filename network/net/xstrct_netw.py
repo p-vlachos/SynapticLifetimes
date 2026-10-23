@@ -30,6 +30,11 @@ def run_net(tr):
     # prefs.codegen.target = 'numpy'
     # prefs.codegen.target = 'cython'
     if tr.n_threads > 1:
+        # the recording functions in cpp_methods.py write to shared output
+        # streams, which is not thread-safe
+        if tr.turnover_rec or tr.synEE_rec or tr.synEI_rec or tr.syn_scl_rec or tr.syn_iscl_rec:
+            raise ValueError("n_threads > 1 cannot be combined with turnover_rec, synEE_rec, "
+                             "synEI_rec, syn_scl_rec or syn_iscl_rec")
         prefs.devices.cpp_standalone.openmp_threads = tr.n_threads
 
     set_device('cpp_standalone', directory='./builds/%.4d'%(tr.v_idx),
@@ -144,7 +149,7 @@ def run_net(tr):
             PInp = PoissonGroup(tr.NPInp, rates=tr.PInp_rate,
                                 namespace=namespace, name='poissongroup_exc')
             
-            sPN = Synapses(target=GExc, source=PInp, model=tr.poisson_mod,
+            sPN = Synapses(target=GExc, source=PInp,
                            on_pre='gext_post += a_EPoi',
                            namespace=namespace, name='synPInpExc')
             
@@ -155,9 +160,9 @@ def run_net(tr):
         elif tr.PInp_mode == 'indep':
             PInp = PoissonGroup(tr.N_e, rates=tr.PInp_rate,
                                 namespace=namespace)
-            sPN = Synapses(target=GExc, source=PInp, model=tr.poisson_mod,
+            sPN = Synapses(target=GExc, source=PInp,
                            on_pre='gext_post += a_EPoi',
-                           namespace=namespace, name='synPInp_inhInh')
+                           namespace=namespace, name='synPInpExc')
             sPN_src, sPN_tar = range(tr.N_e), range(tr.N_e)
 
         sPN.connect(i=sPN_src, j=sPN_tar)
@@ -168,8 +173,7 @@ def run_net(tr):
                                     namespace=namespace, name='poissongroup_inh')
             
             sPNInh = Synapses(target=GInh, source=PInp_inh,
-                              model=tr.poisson_mod,
-                              on_pre='gext_post += a_EPoi',
+                              on_pre='gext_post += a_IPoi',
                               namespace=namespace)
             
             sPNInh_src, sPNInh_tar = generate_N_connections(N_tar=tr.N_i,
@@ -182,8 +186,7 @@ def run_net(tr):
                                     namespace=namespace)
 
             sPNInh = Synapses(target=GInh, source=PInp_inh,
-                              model=tr.poisson_mod,
-                              on_pre='gext_post += a_EPoi',
+                              on_pre='gext_post += a_IPoi',
                               namespace=namespace)
 
             sPNInh_src, sPNInh_tar = range(tr.N_i), range(tr.N_i)
@@ -281,7 +284,11 @@ def run_net(tr):
         synEI_post_mod = '''%s 
                             %s''' %(synEI_post_mod, mod.synEI_post_rec)
             
-    if tr.istdp_active:        
+    # transmission of static synapses, matching the conductance modes
+    static_pre_EE = 'ge_post += {a}' if tr.syn_cond_mode == 'exp' else 'xge_post += {a}/norm_f_EE'
+    static_pre_EI = 'gi_post += {a}' if tr.syn_cond_mode_EI == 'exp' else 'xgi_post += {a}/norm_f_EI'
+
+    if tr.istdp_active:
         SynEI = Synapses(target=GExc, source=GInh, model=synEI_mod,
                          on_pre=synEI_pre_mod, on_post=synEI_post_mod,
                          namespace=namespace, dt=tr.synEE_mod_dt)
@@ -289,13 +296,12 @@ def run_net(tr):
         model = '''a : 1
                    syn_active : 1'''
         SynEI = Synapses(target=GExc, source=GInh, model=model,
-                         on_pre='gi_post += a',
+                         on_pre=static_pre_EI.format(a='a'),
                          namespace=namespace)
 
-    #other simple
-    conductance_prefix = "" if tr.syn_cond_mode == "exp" else "x"
-    SynIE = Synapses(target=GInh, source=GExc, on_pre=f'{conductance_prefix}ge_post += a_ie', namespace=namespace)
-    SynII = Synapses(target=GInh, source=GInh, on_pre=f'{conductance_prefix}gi_post += a_ii', namespace=namespace)
+    # static synapses onto inhibitory neurons
+    SynIE = Synapses(target=GInh, source=GExc, on_pre=static_pre_EE.format(a='a_ie'), namespace=namespace)
+    SynII = Synapses(target=GInh, source=GInh, on_pre=static_pre_EI.format(a='a_ii'), namespace=namespace)
 
     # all possible EE synapses exist, structural plasticity (de)activates them
     sEE_src, sEE_tar = generate_full_connectivity(tr.N_e, same=True)
@@ -311,13 +317,12 @@ def run_net(tr):
                                                         np.array(GInh.x), np.array(GInh.y),
                                                         tr.half_width, tr.grid_size, tr.grid_wrap,
                                                         same=False, sparseness=tr.p_ei)
-        SynEI.connect(i=sEI_src, j=sEI_tar)
-        if tr.istdp_active:
-            SynEI.Aplus = tr.Aplus if tr.iAplus < 0 else tr.iAplus
-            SynEI.Aminus = tr.Aminus if tr.iAminus < 0 else tr.iAminus
     else:
         sEI_src, sEI_tar, _, _ = generate_connections(tr.N_e, tr.N_i, tr.p_ei)
-        SynEI.connect(i=sEI_src, j=sEI_tar)
+    SynEI.connect(i=sEI_src, j=sEI_tar)
+    if tr.istdp_active:
+        SynEI.Aplus = tr.Aplus if tr.iAplus < 0 else tr.iAplus
+        SynEI.Aminus = tr.Aminus if tr.iAminus < 0 else tr.iAminus
 
     if tr.istdp_active:        
         SynEI.taupre, SynEI.taupost = tr.taupre_EI, tr.taupost_EI
@@ -360,11 +365,9 @@ def run_net(tr):
     SynEE.p_inactivate = tr.p_inactivate
     SynEE.stdp_active = 1
     SynEE.syn_noise_active = 1
-    print('Setting maximum EE weight threshold to ', tr.amax)
-
-    if tr.stdp_active:
-        SynEE.amax = tr.amax
-        SynEE.amin = tr.amin
+    # weight bounds, used by STDP, normalization and noise clipping
+    SynEE.amax = tr.amax
+    SynEE.amin = tr.amin
 
     if tr.istdp_active:
         SynEI.stdp_active=1
@@ -406,10 +409,13 @@ def run_net(tr):
     if tr.syn_delay_active:
 
         if tr.syn_dd_delay_active:
-            ee_delays = network_features.synapse_dd_delays(dist_EE, SynEE)
-            ei_delays = network_features.synapse_dd_delays(dist_EI, SynEI)
-            ii_delays = network_features.synapse_dd_delays(dist_II, SynII)
-            ie_delays = network_features.synapse_dd_delays(dist_IE, SynIE)
+            if not tr.ddcon_active:
+                raise ValueError("syn_dd_delay_active requires ddcon_active")
+            dd_delay_args = dict(velocity=tr.syn_dd_delay_velocity, rel_sd=tr.syn_dd_delay_rel_sd)
+            ee_delays = network_features.synapse_dd_delays(dist_EE, sEE_src, sEE_tar, SynEE, **dd_delay_args)
+            ei_delays = network_features.synapse_dd_delays(dist_EI, sEI_src, sEI_tar, SynEI, **dd_delay_args)
+            ii_delays = network_features.synapse_dd_delays(dist_II, sII_src, sII_tar, SynII, **dd_delay_args)
+            ie_delays = network_features.synapse_dd_delays(dist_IE, sIE_src, sIE_tar, SynIE, **dd_delay_args)
         else:
             shapeEE, shapeEI, shapeII, shapeIE = syn_EE_active_init.shape, len(sEI_src), len(sII_src), len(sIE_src)
             ee_delays = network_features.synapse_delays(tr.synEE_delay, tr.synEE_delay_windowsize, SynEE, shapeEE)
