@@ -16,7 +16,6 @@ namespace {
      * simulation.
      **/
     std::ofstream          turnover_output_stream{"turnover",          std::ios_base::app};
-    std::ofstream       turnover_EI_output_stream("turnover_EI",       std::ios_base::app);
     std::ofstream    scaling_deltas_output_stream("scaling_deltas",    std::ios_base::app);
     std::ofstream scaling_deltas_EI_output_stream{"scaling_deltas_EI", std::ios_base::app};
     std::ofstream      spk_register_output_stream{"spk_register",      std::ios_base::app};
@@ -25,10 +24,6 @@ namespace {
 
 std::ostream& turnover_output_file() {
     return turnover_output_stream;
-}
-
-std::ostream& turnover_EI_output_file() {
-    return turnover_EI_output_stream;
 }
 
 std::ostream& scaling_deltas_output_file() {

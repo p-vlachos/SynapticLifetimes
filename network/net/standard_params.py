@@ -50,38 +50,6 @@ sigma_e = 0.5**0.5*mV
 sigma_i = 0.5**0.5*mV
 """memnoise σ for inhibitory neurons"""
 
-# very strong membrane noise
-strong_mem_noise_active = 0
-"""
-    Activate Poisson membrane noise, that can enable the post-synaptic neuron with one spike.
-    See also :meth:`net.network_features.strong_noise`
-"""
-strong_mem_noise_rate = 1/(10*second)
-"""
-    Rate of strong Poisson membrane noise.
-"""
-
-cramer_noise_active = 0
-"""
-    Noise inspired by Cramer et al. 2020 (preprint) where a certain number Kext of incoming
-    connections to each neuron is replaced by external noise.
-    See also :meth:`net.network_features.cramer_noise`
-"""
-cramer_noise_Kext = 0.25
-"""
-    Uses p_ee/(1-Kext) * Kext (with p_ie for inhibitory neurons) as incoming noise connections for each neuron. 
-    p_ee and p_ie are required to be set to Kext*(desired full p_ee target) as well as ATotalMax.
-"""
-cramer_noise_rate = 2.5 * Hz
-"""
-    The frequency of the external noise for the cramer noise.
-"""
-cramer_noise_N = N_e
-"""
-    The amount of Poisson spike trains.
-"""
-
-
 # synaptic delay
 syn_delay_active = 0
 """ enables pre-synaptic delays """
@@ -109,17 +77,6 @@ Vt_e = -50.*mV
 Vt_i = -51.*mV
 """initial Vt for inhibitory neurons"""
 
-# Firing Rate Homeostasis: Intrinsic Plasticity
-ip_active = 0
-""" Enable/disable intrinsic plasticity following Miner & Triesch 2016 """
-h_IP_e = 3 * Hz
-""" Target firing rate for excitatory neurons following Miner & Triesch 2016 """
-h_IP_i = 8 * Hz
-""" Target firing rate for inhibitory neurons following Miner & Triesch 2016 """
-eta_IP = 0.1 * mV
-""" Threshold change rate per spike """
-
-ascale = 1.0
 a_ee = 0.005
 """initial activity of EE synapses"""
 a_ie = 0.005
@@ -129,8 +86,6 @@ a_ei = 0.005
 a_ii = 0.005
 """initial activity of II synapses"""
 
-p_ee_init = 0.00
-"""initial EE connectivity - 0.00 if p_ee should be used"""
 p_ee = 0.15
 """initial probability for synapse connection being active"""
 p_ie = 0.15
@@ -152,37 +107,8 @@ amin_i = -1.0
 amax_i = -1.0
 """ Set to something >= 0 if should be different from amax """
 
-a_ee_mode = "constant"
-"""
-    Use :member:`a_ee` to initialize EE weights, or use a lognormal distribution:
-    
-    * `constant` uses `a_ee`
-    * `lognormal` uses `10**np.random.normal(a_ee_lognormal_mu, a_ee_lognormal_sig)` (a lognormal distribution to base 10)
-"""
-
-stdp_ee_mode = "song"
-""" Either `song`, `triplet` or `jedlicka`. """
-tau_slow = 100*ms
-""" Slow tau for triplet rule """
-triplet_kappa = 4*Hz
-""" Exc. target frequency for triplet rule """
 tau_r = 15*second
 """ Time constant of postsynaptic firing rate average decay. """
-jedlicka_kappa = 2 * Hz
-""" 
-    Basically 1/(alpha*dt).
-    
-    In the paper Jedlicka et al. 2015, they choose an alpha as factor when calculating the scaling factor c of
-    depression/potentiation. The way they describe it, this alpha is chosen based on dt. Since we implement the rate
-    detector as a differential equation subject to scaling by dt, the input should also be scaled by dt. We also set
-    this as a rate rather than an interval. 
-"""
-
-a_ee_init_lognormal_mu = -1.0
-"""See :member:`a_ee_mode`"""
-a_ee_init_lognormal_sig = 0.0
-"""See :member:`a_ee_mode`"""
-
 
 external_mode = 'memnoise'
 """Either 'memnoise' or 'poisson' but latter seems to be unimplemented"""
@@ -240,21 +166,15 @@ synEE_rec = 1
 """enable recording of EE synapse spikes"""
 ATotalMax = 0.2
 """the normalization target is drawn from a normal distribution with this expected value"""
-ATotalMaxSingle = 0.0033  # calculated from ATotalMax/((Ne-1)*p_ee)
-"""if using `proportional` mode, this is used to calculate the normalization target"""
 sig_ATotalMax = 0.05
 """the normalization target is drawn from a normal distribution with this sigma"""
 
 #iSTDP
 istdp_active = 1
-istdp_type = 'sym'
-"""either ``sym`` or ``dbexp``"""
 taupre_EI = 20*ms
 taupost_EI = 20*ms
 synEI_rec = 1
 "record EI synapse spikes"
-LTD_a = 0.000005
-"""constant depression in symmetric iSTDP"""
 iAplus = -1.0
 """potentiation maximum for iSTDP, -1 means same as Aplus"""
 iAminus = -1.0
@@ -270,68 +190,19 @@ eta_scaling = 0.25
 # iscaling
 iscl_active = 1
 iATotalMax = 0.7/6
-iATotalMaxSingle = 0.0029  # iATotalMax/((Ni-1)*p_ei)
-"""if using `proportional` mode, this is used to calculate the normalization target"""
 sig_iATotalMax = 0.025
 syn_iscl_rec = 0
 """record inhibitory synaptic scaling (via CPP methods)"""
 eta_iscaling = -1.0
 """ Learning rate for normalization of EI connections. If `-1.0` it's set to same as :member:`eta_scaling`. """
 
-scl_mode = "constant"
-""" How the target for synaptic scaling is determined
-
-Possible values:
-
-    1. `constant` simply use :member:`ATotalMax` and :member:`iATotalMax` respectively
-    2. `proportional` calculates `ATotalMax` for each post-synaptic neuron by summing
-       :member:`ATotalMaxSingle` and :member:`iATotalMaxSingle` respectively for each active synapse.
-    3. `scaling` scales the target to achieve firing rate homeostasis. The step is determined by
-        `(scl_scaling_eta) * ((scl_scaling_kappa-r)/scl_scaling_kappa)`.
-    4. `scaling_nonadaptive` scales the target to achieve firing rate homeostasis. The is solely determined by
-        scl_scaling_eta and the desired direction (down if r > kappa, up if r < kappa).
-    5. `scaling_saturated` like 3) but clipped to min_Ascaling, max_Ascaling
-"""
-min_Ascaling = -100.0  # small minimum
-max_Ascaling = 100.0   # large maximum
 scaling_kappa = 2.5 * Hz
 scaling_eta = 0.1
 scaling_dt = 10*second
 
-# short-term depression
-std_active = 0
-"""
-    Short-term depression as described by (Dayan & Abbott 2014; sec. 5.8) and (Rusu et al. 2014).
-    Default parameters are taken from (Rusu et al. 2014).
-"""
-tau_std = 200*ms
-"""c.f. (Rusu et al. 2014) and :member:`std_active`"""
-std_d = 0.5
-"""c.f. (Rusu et al. 2014) and :member:`std_active`"""
-synEE_std_rec = 0
-"""record variable D for all EE synapses, c.f. :member:`std_active`"""
-
-# Spike-Rate Adaptation
-sra_active = 0
-Dgsra = 0.06
-tau_sra = 100*ms
-Esra = -70 * mV
-
 # structural plasticity
 strct_active = 1
 """enable/disable structural plasticity"""
-strct_mode = 'zero'
-"""
-    one of two:
-    
-    * ``zero`` synapses stay active if their activity is above threshold (see strct_c) and only become inactive
-      if below that threshold and with a probability (see p_inactivate);
-      they become active randomly (see insert_P)
-    * ``threshold`` synapses stay active if their activity is above a certain threshold
-      they might become active randomly (see insert_P)
-"""
-prn_thrshld = 0.001 * ATotalMax
-"""synapse prune threshold"""
 insert_P = 0.0002
 """synapse creation probability"""
 strct_dt = 1000*ms
@@ -345,16 +216,6 @@ p_inactivate = 0.01
 strct_c = 0.002
 """threshold for ``zero`` mode"""
 
-# inhibitory structural plasticity
-istrct_active = 0
-"""enable inhibitory structural plasticity"""
-insert_P_ei = 0.00005
-"""EI synapse creation probability"""
-p_inactivate_ei = 0.25
-"""probability for a EI synapse to become inactive if activity below threshold"""
-
-
-#preT  = 100*second
 T1 = 1*second
 """initial recording phase with all recorders active"""
 T2 = 10*second
@@ -367,9 +228,6 @@ T5 = 5*second
 """freeze network and record exc spikes for cross correlations"""
 dt = 0.1*ms
 n_threads = 1
-
-# neuron_method = 'euler'
-# synEE_method = 'euler'
 
 # distance-dependent connectivity
 """
@@ -424,7 +282,6 @@ n_synei_traces_rec = 1000
 synEI_stat_dt = 2.*ms
 """time step of EI recording of synaptic traces"""
 
-
 syn_scl_rec = 1
 """record synaptic scaling (via CPP methods)"""
 stdp_rec_T = 1.*second
@@ -441,8 +298,6 @@ syndynrec_npts = 10
 
 turnover_rec = 1
 """recording of synaptic turnover"""
-spks_rec = 1
-"""appears unused"""
 T2_spks_rec = 0
 """recording of excitatory and inhibitory spikes during phase T2"""
 synee_a_nrecpoints = 10
@@ -462,8 +317,6 @@ modes for homeostatic adjustment of growth rate:
   - ```adjust_rate```
   - ```constant_count``` adjust growth rate so that number of synapses stays roughly constant
 """
-adjust_EI_insertP = 0
-"""same for EI"""
 csample_dt = 10*second
 """dt for insertP homeostasis mechanism"""
 
@@ -474,13 +327,5 @@ pp_tcut = 1*second
 population_binned_rec = 0
 """efficiently records binned activity with GExc/GInh.dt resolution per population"""
 
-# weight modes
-basepath = '/home/hoffmann/lab/netw_mods/z2/'
-weight_mode = 'init'
-weight_path = 'weights/'
-
-run_id = 0 # doesn't do anything, added for running 
-           # multiple copies for testing
 random_seed = 578
 
-profiling = False

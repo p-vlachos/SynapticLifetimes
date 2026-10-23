@@ -29,7 +29,6 @@ class BinnedActivityMonitor(Group, CodeRunner):
 
         self.add_dependency(source)
 
-        print(source.N)
         assert source.N <= np.iinfo(dtype).max, "Need to choose dtype that is large enough for all neurons in population active."
         if np.min_scalar_type(source.N) != dtype:
             print(f"Warning: {BinnedActivityMonitor.__name__} could use smaller dtype {np.min_scalar_type(source.N)} instead of {dtype}.")

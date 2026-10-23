@@ -2,36 +2,29 @@
 import pickle
 import numpy as np
 
-from brian2.units import ms,mV,second,Hz
+from brian2.units import second
 
 from analysis.methods.process_survival import extract_survival
 from analysis.methods.process_turnover_pd import extract_lifetimes
 from analysis.methods.process_turnover_statistics import get_insert_and_prune_counts
 
-from analysis.srvprb_all import srvprb_all_figure
 from analysis.srvprb_EE import srvprb_EE_figure
-from analysis.srvprb_EI import srvprb_EI_figure
 from analysis.branching_ratio import branching_ratio_figure
 
 from analysis.methods.resample_dA import resample_spk_register, \
                                          resample_scl_deltas
 
 
-def post_process_turnover(tr, connections='EE', binning=True, from_numpy=False, turnover=None):
-
-    if connections=='EE':
-        cn=''
-    elif connections=='EI':
-        cn='_EI'
+def post_process_turnover(tr, binning=True, from_numpy=False, turnover=None):
 
     t_cut = tr.pp_tcut
     t_split = (tr.T1+tr.T2+tr.T3+tr.T4-t_cut)/2.
 
     if turnover is None:
         if from_numpy:
-            turnover = np.load('builds/%.4d/raw/turnover%s.npz'%(tr.v_idx,cn))['turnover']
+            turnover = np.load('builds/%.4d/raw/turnover.npz'%(tr.v_idx))['turnover']
         else:
-            with open('builds/%.4d/raw/turnover%s.p' %(tr.v_idx,cn), 'rb') as pfile:
+            with open('builds/%.4d/raw/turnover.p' %(tr.v_idx), 'rb') as pfile:
                 turnover = pickle.load(pfile)
 
     # abort if turnover empty
@@ -40,9 +33,7 @@ def post_process_turnover(tr, connections='EE', binning=True, from_numpy=False, 
 
     if t_split/second > 0:
 
-        # tr.N_e only used for s_id creation,
-        # and since tr.N_i > tr.N_e,
-        # tr.NE is correct for both 'EE' & 'EI'
+        # tr.N_e only used for s_id creation
         print("starting survival times")
         full_t, ex_ids = extract_survival(turnover,
                                           tr.N_e,
@@ -50,7 +41,7 @@ def post_process_turnover(tr, connections='EE', binning=True, from_numpy=False, 
                                           t_cut=t_cut)
         print("done with survival, saving now")
 
-        fpath = 'builds/%.4d/raw/survival%s_full_t.p' %(tr.v_idx, cn)
+        fpath = 'builds/%.4d/raw/survival_full_t.p' %(tr.v_idx)
         with open(fpath, 'wb') as pfile:
             out = {'t_split': t_split, 't_cut': t_cut,
                    'full_t': full_t, 'excluded_ids': ex_ids}
@@ -79,7 +70,7 @@ def post_process_turnover(tr, connections='EE', binning=True, from_numpy=False, 
                                      density=True)
         centers = (edges[:-1] + edges[1:])/2.            
         
-        with open(bpath+'/raw/lts%s_wthsrv_' %cn +f_add+'.p', 'wb') as pfile:
+        with open(bpath+'/raw/lts_wthsrv_'+f_add+'.p', 'wb') as pfile:
             out = {'Tmax': Tmax, 't_cut': t_cut,
                    'counts': counts, 'excluded_ids': ex_ids,
                    'bins': bins, 'centers': centers, 'bin_w': bin_w}
@@ -90,7 +81,7 @@ def post_process_turnover(tr, connections='EE', binning=True, from_numpy=False, 
                                      density=True)
         centers = (edges[:-1] + edges[1:])/2.            
 
-        with open(bpath+'/raw/lts%s_dthonly_' %cn +f_add+'.p', 'wb') as pfile:
+        with open(bpath+'/raw/lts_dthonly_'+f_add+'.p', 'wb') as pfile:
             out = {'Tmax': Tmax, 't_cut': t_cut,
                    'counts': counts, 'excluded_ids': ex_ids,
                    'bins': bins, 'centers': centers, 'bin_w': bin_w}
@@ -109,7 +100,7 @@ def post_process_turnover(tr, connections='EE', binning=True, from_numpy=False, 
                                      density=True)
         centers = (edges[:-1] + edges[1:])/2.            
 
-        with open(bpath+'/raw/lts%s_wthsrv_' %cn +f_add+'.p', 'wb') as pfile:
+        with open(bpath+'/raw/lts_wthsrv_'+f_add+'.p', 'wb') as pfile:
             out = {'Tmax': Tmax, 't_cut': t_cut,
                    'counts': counts, 'excluded_ids': ex_ids,
                    'bins': bins, 'centers': centers, 'nbins': nbins}
@@ -120,7 +111,7 @@ def post_process_turnover(tr, connections='EE', binning=True, from_numpy=False, 
                                      density=True)
         centers = (edges[:-1] + edges[1:])/2.            
 
-        with open(bpath+'/raw/lts%s_dthonly_' %cn +f_add+'.p', 'wb') as pfile:
+        with open(bpath+'/raw/lts_dthonly_'+f_add+'.p', 'wb') as pfile:
             out = {'Tmax': Tmax, 't_cut': t_cut,
                    'counts': counts, 'excluded_ids': ex_ids,
                    'bins': bins, 'centers': centers, 'nbins': nbins}
@@ -128,24 +119,19 @@ def post_process_turnover(tr, connections='EE', binning=True, from_numpy=False, 
 
 
 
-def post_process_per_neuron_turnover_counts(tr, connections='EE'):
-
-    if connections=='EE':
-        cn=''
-    elif connections=='EI':
-        cn='_EI'
+def post_process_per_neuron_turnover_counts(tr):
 
     t_cut = tr.pp_tcut
     t_max = tr.T1+tr.T2+tr.T3+tr.T4
 
-    with open('builds/%.4d/raw/turnover%s.p' %(tr.v_idx,cn), 'rb') as pfile:
+    with open('builds/%.4d/raw/turnover.p' %(tr.v_idx), 'rb') as pfile:
         turnover = pickle.load(pfile)
         
     ins_c, prn_c = get_insert_and_prune_counts(turnover, tr.N_e, t_cut, t_max)
 
     bpath = 'builds/%.4d' %(tr.v_idx)
     
-    with open(bpath+'/raw/ins-prn_counts%s' %cn + '.p', 'wb') as pfile:
+    with open(bpath+'/raw/ins-prn_counts.p', 'wb') as pfile:
         out = {'t_max': t_max, 't_cut': t_cut,
                'ins_c': ins_c, 'prn_c': prn_c}
         pickle.dump(out, pfile)
@@ -238,18 +224,9 @@ def post_process(tr):
     if tr.turnover_rec and want_postprocess:
 
         if tr.strct_active:
-            post_process_turnover(tr, 'EE')
-        if tr.istdp_active and tr.istrct_active:
-            post_process_turnover(tr, 'EI')
+            post_process_turnover(tr)
+            post_process_per_neuron_turnover_counts(tr)
 
-        if tr.strct_active:
-            post_process_per_neuron_turnover_counts(tr, 'EE')
-        if tr.istdp_active and tr.istrct_active:
-            post_process_per_neuron_turnover_counts(tr, 'EI')
-
-        
         srvprb_EE_figure('builds/%.4d'%(tr.v_idx))
-        srvprb_EI_figure('builds/%.4d'%(tr.v_idx))
-        srvprb_all_figure('builds/%.4d'%(tr.v_idx))
 
 

@@ -3,7 +3,6 @@ import argparse
 import git
 import pypet.pypetexceptions as pex
 
-# from .workarounds import fix_pypet_macos
 from .explored_params import explore_dict, name
 from .xstrct_module import main
 
@@ -16,8 +15,6 @@ args = parser.parse_args()
 ncores = int(args.ncores[0])
 
 print("Using {:d} cores".format(ncores))
-
-# fix_pypet_macos()
 
 commit = None
 if not args.testrun:

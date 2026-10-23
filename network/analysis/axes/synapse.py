@@ -11,44 +11,6 @@ from ..utils import convert_to_EE_adjacency_matrix, \
                     convert_to_EI_adjacency_matrix
 
 
-def n_active_synapses_inh(ax, bpath, nsp):
-
-    if nsp['istrct_active']:
-        
-        try: 
-            with open(bpath+'/raw/synei_a.p', 'rb') as pfile:
-                synei_a = pickle.load(pfile)
-
-            # trace 1: data from synEI_a (~11 data points)
-            active_at_t = np.sum(synei_a['syn_active'], axis=1)
-
-            print(active_at_t)
-            print(synei_a['t'])
-
-            all_at_t = np.shape(synei_a['syn_active'])[1]
-            # assert all_at_t == nsp['N_e']*nsp['N_i']
-
-            ax.plot(synei_a['t'], active_at_t/all_at_t, lw=2)
-
-
-        except FileNotFoundError:
-            print(bpath[-4:], "reports: No n_active data!")
-            ax.set_title("No data found")        
-
-
-
-        ax.set_xlabel('time [s]')
-        ax.set_ylabel('fraction of synapses active')
-
-        ax.spines['right'].set_visible(False)
-        ax.spines['top'].set_visible(False)
-        ax.yaxis.set_ticks_position('left')
-        ax.xaxis.set_ticks_position('bottom')
-
-    else:
-        ax.axis('off')
-
-    
 def synapse_weights_linear(ax, bpath, nsp, tstep, bins, cutoff,
                            label='', fit=False, connections='EE'):
 

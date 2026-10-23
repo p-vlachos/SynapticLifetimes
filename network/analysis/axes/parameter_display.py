@@ -150,15 +150,10 @@ def synapse_params_display(ax, bpath, nsp):
 
 
     
-    text = '$a_{ee}=$ %.2E ' %(Decimal(nsp['a_ee']/nsp['ascale'])) +\
-           '$a_{\\mathrm{scale}}$' +\
-           '\n$a_{ie}=$ %.2E ' %(Decimal(nsp['a_ie']/nsp['ascale'])) +\
-           '$a_{\\mathrm{scale}}$' +\
-           '\n $a_{ei}$ = %.2E ' % (Decimal(nsp['a_ei']/nsp['ascale'])) +\
-           '$a_{\\mathrm{scale}}$' +\
-           '\n $a_{ii}$ = %.2E '  % Decimal((nsp['a_ii']/nsp['ascale']))  +\
-           '$a_{\\mathrm{scale}}$' +\
-           '\n$a_{\\mathrm{scale}} =$ %.3E' % Decimal(nsp['ascale'])
+    text = '$a_{ee}=$ %.2E' %(Decimal(nsp['a_ee'])) +\
+           '\n$a_{ie}=$ %.2E' %(Decimal(nsp['a_ie'])) +\
+           '\n $a_{ei}$ = %.2E' % (Decimal(nsp['a_ei'])) +\
+           '\n $a_{ii}$ = %.2E'  % Decimal((nsp['a_ii']))
                                             
     ax.text(0., 0.75, text,
             horizontalalignment='left',
@@ -217,7 +212,9 @@ def stdp_params_display(ax, bpath, nsp):
                       'alpha':1, 'edgecolor':'none'},
                 transform = ax.transAxes)
 
-        text = r'$\mathrm{LTD}_{\alpha} = %f $' %(nsp['LTD_a']) 
+        iAplus = nsp['Aplus'] if nsp['iAplus'] < 0 else nsp['iAplus']
+        iAminus = nsp['Aminus'] if nsp['iAminus'] < 0 else nsp['iAminus']
+        text = r'$A^{\mathrm{EI}}_{\mathrm{plus}} = %f$, $A^{\mathrm{EI}}_{\mathrm{minus}} = %f$' %(iAplus, iAminus)
 
         ax.text(0., 0.05, text,
                 horizontalalignment='left',
@@ -309,22 +306,7 @@ def strct_params_display(ax, bpath, nsp):
            '\n$a_{\\mathrm{insert}} = %f$' %(nsp['a_insert']) +\
            '\n$c = %f$' %(nsp['strct_c']) +\
            '\n$p_{\\mathrm{inactivate}} = %f$' %(nsp['p_inactivate']) +\
-           '\n $a_{\\mathrm{thrshld}} = %f$' %(nsp['prn_thrshld']) +\
            '\n $\\Delta_{\\mathrm{strct}} =\\,$ \\SI{%.2f}{ms}' %(nsp['strct_dt']/ms)
-
-    if nsp['istrct_active']==1:
-        
-        text = '$p^{\\mathrm{EE}}_{\\mathrm{insert}} = %f$' %(nsp['insert_P']) +\
-               ', $p^{\\mathrm{EI}}_{\\mathrm{insert}} = %f$' %(nsp['insert_P_ei']) +\
-               '\n$a^{\\mathrm{EE}}_{\\mathrm{insert}} = %f$' %(nsp['a_insert']) +\
-               ', $a^{\\mathrm{EI}}_{\\mathrm{insert}} = %f$' %(nsp['a_insert']) +\
-               '\n$c^{EE} = %f$' %(nsp['strct_c']) +\
-               ', $c^{EI} = %f$' %(nsp['strct_c']) +\
-               '\n$p^{\\mathrm{EE}}_{\\mathrm{inactivate}} = %f$' %(nsp['p_inactivate']) +\
-               ', $p^{\\mathrm{EI}}_{\\mathrm{inactivate}} = %f$' %(nsp['p_inactivate']) +\
-               '\n $a_{\\mathrm{thrshld}} = %f$' %(nsp['prn_thrshld']) +\
-               '\n $\\Delta_{\\mathrm{strct}} =\\,$ \\SI{%.2f}{ms}' %(nsp['strct_dt']/ms)
-        
 
     ax.text(0., 0.85, text,
             horizontalalignment='left',

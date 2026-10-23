@@ -60,14 +60,6 @@ input_dict = {'T1': [10 * second],
               'refractory_exc': ['2*ms'],
               'refractory_inh': ['1*ms'],
 
-              'strong_mem_noise_active': [0],
-              'strong_mem_noise_rate': [0.1*Hz],
-
-              'cramer_noise_active': [0],
-              'cramer_noise_rate': [3.0 * Hz],
-              'cramer_noise_Kext': [1.0],
-              'cramer_noise_N': [int(2.5* 1600)],
-
               # Synaptic parameters
               'syn_cond_mode': ['exp'],
               'syn_cond_mode_EI': ['exp'],
@@ -80,19 +72,15 @@ input_dict = {'T1': [10 * second],
               # Plasticity parameters
               # --- STDP ---
               'stdp_active': [1],
-              'stdp_ee_mode': ['song'],
               'Aplus': [1.6253*stdp_eta],
               'Aminus': [-0.8127*stdp_eta],
 
               'istdp_active': [1],
-              'istdp_type': ['dbexp'],      # or 'dbexp'. Jan told me he used the dbexp
               'iAplus': [1.6253*ifactor*stdp_eta],
-              'iAminus': [-0.5*1.6253*ifactor*stdp_eta],    # This is for assymetric
-              # 'LTD_a': [0.8*ifactor*stdp_eta*0.1],  # for symmetric (why like this)
+              'iAminus': [-0.5*1.6253*ifactor*stdp_eta],
 
               # --- Structural ---
               'strct_active': [1],
-              'strct_mode': ['zero'],
               'strct_dt': [1000 * ms],
               'strct_c': a_min_insert,
               'a_insert': a_min_insert,
@@ -107,7 +95,6 @@ input_dict = {'T1': [10 * second],
               'eta_scaling': [1.0],             # Strength of normalization (if set on 1, then its instantaneous per dt)
 
               'scl_active': [1],
-              'scl_mode': ["scaling"],
               'scl_scaling_kappa': [4.5*Hz],    # Target firing rate
               'scl_scaling_eta': [0.0001], # 0.1         # Scaling "learning rate" (1/τ, where τ the effector)
               'scl_scaling_dt': [1 * second],   # Scaling timestep (how often to apply it)
@@ -153,7 +140,6 @@ input_dict = {'T1': [10 * second],
               'syndynrec_dt': [1 * second],
               'syndynrec_npts': [10],
               'turnover_rec': [1],
-              'spks_rec': [1],
               'T2_spks_rec': [0],
               'rates_rec': [1],
               'anormtar_rec': [1],
@@ -165,18 +151,6 @@ input_dict = {'T1': [10 * second],
               'stdp_rec_T': [1 * second],
               'population_binned_rec': [0],
 
-              # Unused settings (could be deleted)
-              'ip_active': [0],
-              'h_IP_e': [25 * Hz],
-              'h_IP_i': [-80 * Hz],  # disable
-              'eta_IP': [0.01 * mV],
-
-              'synEE_std_rec': [0],
-              'std_active': [0],  # use default parameters
-              'tau_std': [200*ms],
-
-              'sra_active': [0],
-              'Dgsra': [0.1]
 }
 
 
