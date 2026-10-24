@@ -67,7 +67,8 @@ input_dict = {'T1': [10 * second],
               'tau_i': [10*ms],
 
               'syn_noise': [1],
-              'syn_noise_type': ['additive'],   # or 'multiplicative'
+              'syn_sigma_EE': [1e-9/second],    # multiplicative weight noise
+              'syn_sigma_EI': [1e-9/second],
 
               # Plasticity parameters
               # --- STDP ---

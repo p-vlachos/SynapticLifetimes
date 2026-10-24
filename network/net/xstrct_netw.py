@@ -198,23 +198,11 @@ def run_net(tr):
 
         
     if tr.syn_noise:
+        synEE_mod = '''%s 
+                       %s''' %(tr.syn_noise_mod, tr.synEE_mod)
 
-        if tr.syn_noise_type=='additive':
-            synEE_mod = '''%s 
-                           %s''' %(tr.synEE_noise_add, tr.synEE_mod)
-
-            synEI_mod = '''%s 
-                           %s''' %(tr.synEE_noise_add, tr.synEE_mod)
-
-        elif tr.syn_noise_type=='multiplicative':
-            synEE_mod = '''%s 
-                           %s''' %(tr.synEE_noise_mult, tr.synEE_mod)
-
-            synEI_mod = '''%s 
-                           %s''' %(tr.synEE_noise_mult, tr.synEE_mod)
-
-        else:
-            raise ValueError(f"Invalid syn_noise_type {tr.syn_noise_type}")
+        synEI_mod = '''%s 
+                       %s''' %(tr.syn_noise_mod, tr.synEE_mod)
     else:
         synEE_mod = '''%s 
                        %s''' %(tr.synEE_static, tr.synEE_mod)
@@ -352,12 +340,12 @@ def run_net(tr):
 
 
     if tr.syn_noise:
-        SynEE.syn_sigma = tr.syn_sigma
+        SynEE.syn_sigma = tr.syn_sigma_EE
         SynEE.run_regularly('a = syn_active*clip(a,amin,amax)', when='after_groups',
                             name='SynEE_noise_clipper')
 
     if tr.syn_noise and tr.istdp_active:
-        SynEI.syn_sigma = tr.syn_sigma
+        SynEI.syn_sigma = tr.syn_sigma_EI
         SynEI.run_regularly('a = syn_active*clip(a,amin_i,amax_i)', when='after_groups',
                             name='SynEI_noise_clipper') 
 
@@ -373,8 +361,7 @@ def run_net(tr):
         SynEI.stdp_active=1
         SynEI.amin = tr.amin_i if tr.amin_i >= 0 else tr.amin
         SynEI.amax = tr.amax_i if tr.amax_i >= 0 else tr.amax
-        # EI synapses have the noise equations, but the noise is switched off
-        SynEI.syn_noise_active = 0
+        SynEI.syn_noise_active = 1
 
     # initially active EE synapses
     if tr.ddcon_active:

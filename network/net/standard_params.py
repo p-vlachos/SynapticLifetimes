@@ -154,11 +154,11 @@ refractory_inh = "False"
 
 # synapse noise
 syn_noise = 1
-"""enable/disable synapse noise"""
-syn_noise_type = 'additive'
-"""can be either ``additive`` or ``multiplicative``."""
-syn_sigma = 1e-09/second
-"""synapse noise sigma"""
+"""enable/disable multiplicative synaptic weight noise (da = a*sqrt(syn_sigma)*dW) on EE and EI synapses"""
+syn_sigma_EE = 1e-09/second
+"""strength of the weight noise of EE synapses"""
+syn_sigma_EI = 1e-09/second
+"""strength of the weight noise of EI synapses"""
 synEE_mod_dt = 100*ms
 """dt between update of state variables"""
 

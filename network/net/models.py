@@ -60,11 +60,9 @@ nrnEE_reset = 'V = Vr_e'
 
 
 synEE_static = 'a : 1'
-synEE_noise_add   = '''da/dt = syn_noise_active*syn_active*syn_sigma**0.5*xi : 1
-                       syn_sigma : 1/second (shared)'''
-
-synEE_noise_mult  = '''da/dt = syn_noise_active*syn_active*a*syn_sigma**0.5*xi : 1
-                       syn_sigma : 1/second (shared)'''
+# multiplicative weight noise, used for EE and EI synapses
+syn_noise_mod = '''da/dt = syn_noise_active*syn_active*a*syn_sigma**0.5*xi : 1
+                   syn_sigma : 1/second (shared)'''
 
 
 synEE_mod = '''            
