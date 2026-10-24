@@ -206,7 +206,8 @@ scaling_dt = 10*second
 strct_active = 1
 """enable/disable structural plasticity"""
 insert_P = 0.0002
-"""synapse creation probability"""
+"""synapse creation probability (initial value if adjust_insertP is active with adjust_rate,
+unused with constant_count)"""
 strct_dt = 1000*ms
 """structural plasticity timestep"""
 a_insert = 0.

@@ -349,7 +349,13 @@ def run_net(tr):
         SynEI.run_regularly('a = syn_active*clip(a,amin_i,amax_i)', when='after_groups',
                             name='SynEI_noise_clipper') 
 
-    SynEE.insert_P = tr.insert_P
+    if tr.adjust_insertP and tr.adjust_insertP_mode == 'constant_count':
+        # at t=0 the number of active synapses equals the target count, so the
+        # growth homeostasis (which first runs after the first structural
+        # plasticity step) would set insert_P to zero
+        SynEE.insert_P = 0
+    else:
+        SynEE.insert_P = tr.insert_P
     SynEE.p_inactivate = tr.p_inactivate
     SynEE.stdp_active = 1
     SynEE.syn_noise_active = 1
