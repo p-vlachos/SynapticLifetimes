@@ -1,6 +1,6 @@
 # Ignore simulation folders
-tests/
-running/
-completed/
+/tests/
+/running/
+/completed/
 # Python bytecode
 __pycache__/

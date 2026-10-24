@@ -2,8 +2,7 @@ from brian2.units import ms, mV, second, Hz
 from pypet import cartesian_product
 
 
-input_dict = {'run_id' : [0,1,2,3],
-              'ATotalMax': [0.2],
+input_dict = {'ATotalMax': [0.2],
               'iATotalMax': [0.7/6],
               'sig_ATotalMax': [0., 0., 0.05, 0.],
               'sig_iATotalMax': [0., 0., 0., 0.025],

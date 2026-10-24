@@ -2,8 +2,7 @@ from brian2.units import ms, mV, second, Hz
 from pypet import cartesian_product
 
 
-input_dict = {'run_id' : [0,1,2],
-              'random_seed' : [511, 511, 7124],
+input_dict = {'random_seed' : [511, 511, 7124],
               'crs_crrs_rec': [0],
               'syn_scl_rec' : [0],
               'syn_iscl_rec' : [0],

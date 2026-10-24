@@ -16,8 +16,8 @@ input_dict = {'crs_crrs_rec': [0],
               'synEEdynrec': [1],
               'synEIdynrec': [1],
               'turnover_rec': [0],
-              'syn_cond_mode': ['exp', 'alpha', 'biexp'],
-              'syn_cond_mode_EI': ['exp', 'alpha', 'biexp']}
+              'syn_cond_mode': ['exp', 'biexp'],
+              'syn_cond_mode_EI': ['exp', 'biexp']}
 
 
 name = 'test_standard_net'
