@@ -12,7 +12,7 @@ import pypet
 from brian2.units import ms,mV,second,metre,um
 
 from brian2 import NeuronGroup, StateMonitor, SpikeMonitor, \
-                   PoissonGroup, Synapses, set_device, device, Clock, \
+                   PoissonGroup, Synapses, set_device, device, \
                    defaultclock, prefs, Network, PopulationRateMonitor, seed
 
 import elephant.utils
@@ -433,7 +433,15 @@ def run_net(tr):
 
   
        
-    # synaptic scaling
+    # synaptic scaling (normalization of the input weights)
+    # the summed input weights (AsumEE, AsumEI) are updated on the synapses' clock
+    # (synEE_mod_dt), so the normalization interval has to be a multiple of it
+    if tr.scl_active or (tr.istdp_active and tr.iscl_active):
+        n_steps = float(tr.dt_synEE_scaling / tr.synEE_mod_dt)
+        if n_steps < 1 or abs(n_steps - round(n_steps)) > 1e-9:
+            raise ValueError(f"dt_synEE_scaling ({tr.dt_synEE_scaling}) must be a multiple "
+                             f"of synEE_mod_dt ({tr.synEE_mod_dt})")
+
     if tr.netw.config.scl_active:
 
         if tr.syn_scl_rec:
@@ -452,14 +460,13 @@ def run_net(tr):
                                              scale=tr.sig_ATotalMax,
                                              size=tr.N_e)
         # homeostatic adaptation of the normalization target
-        GExc.run_regularly(
+        synee_target_scaling = GExc.run_regularly(
             mod.synEE_target_scaling,
             dt=tr.scl_scaling_dt,
             when='end',
             name='synEE_target_scaling'
         )
 
-        SynEE.summed_updaters['AsumEE_post']._clock = Clock(dt=tr.dt_synEE_scaling)
         synee_scaling = SynEE.run_regularly(tr.synEE_scaling,
                                             dt=tr.dt_synEE_scaling,
                                             when='end',
@@ -480,9 +487,6 @@ def run_net(tr):
             GExc.iANormTar = np.random.normal(loc=tr.iATotalMax,
                                               scale=tr.sig_iATotalMax,
                                               size=tr.N_e)
-
-        SynEI.summed_updaters['AsumEI_post']._clock = Clock(
-            dt=tr.dt_synEE_scaling)
 
         synei_scaling = SynEI.run_regularly(tr.synEI_scaling,
                                             dt=tr.dt_synEE_scaling,
@@ -781,6 +785,7 @@ def run_net(tr):
 
     if tr.scl_active:
         synee_scaling.active=False
+        synee_target_scaling.active=False
     if tr.istdp_active and tr.netw.config.iscl_active:
         synei_scaling.active=False
     if tr.strct_active:
