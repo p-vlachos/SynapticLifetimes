@@ -61,19 +61,13 @@ def run_net(tr):
     # and add them to the Brian 2 network object later
     netw_objects = []
 
+    # equations shared by excitatory and inhibitory neurons
     if tr.external_mode=='memnoise':
-        neuron_model = tr.condlif_memnoise
+        neuron_model = tr.neuron_memnoise
     elif tr.external_mode=='poisson':
-        # raise NotImplementedError
-        neuron_model = tr.condlif_poisson
+        neuron_model = tr.neuron_poisson
     else:
-        raise NotImplementedError
-
-    neuronE_reset, neuronI_reset = tr.nrnEE_reset, 'V=Vr_i'
-
-    if tr.scl_active:
-        neuron_model += f"\n{tr.condlif_rate_sensor}"
-        neuronE_reset += f"\n{tr.reset_rate_sensor}"
+        raise ValueError(f"Invalid external_mode {tr.external_mode}")
 
     if tr.syn_cond_mode=='exp':
         neuron_model += tr.syn_cond_EE_exp
@@ -101,20 +95,26 @@ def run_net(tr):
     if tr.ddcon_active:
         neuron_model += tr.ddcon
 
-    GExc = NeuronGroup(N=tr.N_e, model=neuron_model,
-                       threshold=tr.nrnEE_thrshld,
-                       reset=neuronE_reset, #method=tr.neuron_method,
+    # excitatory neurons additionally carry the variables of the plasticity
+    # mechanisms acting on their input synapses
+    neuron_model_exc = f"{neuron_model}\n{tr.neuron_exc_normalization}"
+    neuron_reset_exc = tr.neuron_reset_exc
+    if tr.scl_active:
+        neuron_model_exc += f"\n{tr.condlif_rate_sensor}"
+        neuron_reset_exc += f"\n{tr.reset_rate_sensor}"
+
+    GExc = NeuronGroup(N=tr.N_e, model=neuron_model_exc,
+                       threshold=tr.neuron_threshold,
+                       reset=neuron_reset_exc,
                        name='GExc', namespace=namespace,
                        refractory=tr.refractory_exc)
     GInh = NeuronGroup(N=tr.N_i, model=neuron_model,
-                       threshold ='V > Vt',
-                       reset=neuronI_reset, #method=tr.neuron_method,
+                       threshold=tr.neuron_threshold,
+                       reset=tr.neuron_reset_inh,
                        name='GInh', namespace=namespace,
                        refractory=tr.refractory_inh)
 
     if tr.external_mode=='memnoise':
-        # GExc.mu, GInh.mu = [0.*mV] + (tr.N_e-1)*[tr.mu_e], tr.mu_i
-        # GExc.sigma, GInh.sigma = [0.*mV] + (tr.N_e-1)*[tr.sigma_e], tr.sigma_i
         GExc.mu, GInh.mu = tr.mu_e, tr.mu_i
         GExc.sigma, GInh.sigma = tr.sigma_e, tr.sigma_i
 
@@ -126,7 +126,6 @@ def run_net(tr):
 
     if tr.scl_active:
         GExc.r = tr.scl_scaling_kappa
-        GInh.r = tr.scl_scaling_kappa
 
     # ddcon init
     if tr.ddcon_active:
@@ -574,7 +573,8 @@ def run_net(tr):
         if tr.iscl_active == 1:
             GExc_recvars.append('iANormTar')
 
-    GInh_recvars = GExc_recvars
+    # the normalization targets only exist for excitatory neurons
+    GInh_recvars = [v for v in GExc_recvars if v not in ('ANormTar', 'iANormTar')]
     
     GExc_stat = StateMonitor(GExc, GExc_recvars,
                              record=list(range(tr.nrec_GExc_stat)),

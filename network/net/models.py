@@ -1,34 +1,33 @@
 
-condlif_poisson = '''
+# --- neurons ---
+# conductance-based LIF neurons (used for both populations); the external input is
+# either membrane noise (memnoise) or Poisson spike trains through the conductance gext
+neuron_memnoise = '''
+              dV/dt = (El-V + ge*(Ee-V) + gi*(Ei-V))/tau +  mu/tau + (sigma * xi) / (tau **.5) : volt (unless refractory)
+              Vt : volt
+              sigma: volt (constant)
+              mu : volt (constant)
+              '''
+
+neuron_poisson = '''
               dV/dt = (El-V + (ge + gext)*(Ee-V) + gi*(Ei-V))/tau : volt (unless refractory)
               dgext/dt = -gext/tau_e : 1
               Vt : volt
+              '''
 
+# variables of excitatory neurons for the normalization of their input weights
+neuron_exc_normalization = '''
               AsumEE : 1
               AsumEI : 1
-
               ANormTar : 1
               iANormTar : 1
               min_ANormTar : 1
               max_ANormTar : 1
               '''
 
-
-condlif_memnoise = '''
-              dV/dt = (El-V + ge*(Ee-V) + gi*(Ei-V))/tau +  mu/tau + (sigma * xi) / (tau **.5) : volt (unless refractory)
-              Vt : volt
-
-              AsumEE : 1
-              AsumEI : 1
-
-              sigma: volt (constant)
-              mu : volt (constant)
-
-              ANormTar : 1
-              iANormTar : 1
-              min_ANormTar : 1
-              max_ANormTar : 1
-              '''
+neuron_threshold = 'V > Vt'
+neuron_reset_exc = 'V = Vr_e'
+neuron_reset_inh = 'V = Vr_i'
 
 # firing rate sensor, used by the homeostatic adaptation of the normalization target
 condlif_rate_sensor = "dr/dt = -r/tau_r : Hz"
@@ -54,9 +53,6 @@ syn_cond_EI_biexp = '''
                     '''
 
 
-nrnEE_thrshld = 'V > Vt'
-
-nrnEE_reset = 'V = Vr_e'
 
 
 synEE_static = 'a : 1'
