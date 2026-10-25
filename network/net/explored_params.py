@@ -79,6 +79,8 @@ input_dict = {'T1': [10 * second],
               'istdp_active': [1],
               'iAplus': [1.6253*ifactor*stdp_eta],
               'iAminus': [-0.5*1.6253*ifactor*stdp_eta],
+              'taupre_EI': [20*ms],
+              'taupost_EI': [20*ms],
 
               # --- Structural ---
               'strct_active': [1],
