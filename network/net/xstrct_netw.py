@@ -546,11 +546,11 @@ def run_net(tr):
         """, namespace=namespace)
         if tr.adjust_insertP_mode == "adjust_rate":
             # multiplicative adjustment towards an active fraction of p_ee
-            growth_updater.run_regularly('insert_P_post *= p_ee/c_pre',
+            update_insP = growth_updater.run_regularly('insert_P_post *= p_ee/c_pre',
                                          when='after_groups', dt=tr.csample_dt,
                                          name='update_insP')
         elif tr.adjust_insertP_mode == "constant_count":
-            growth_updater.run_regularly('''
+            update_insP = growth_updater.run_regularly('''
                 synapse_current_count = int(c_pre*synapse_max_count)
                 synapse_needed_count = synapse_target_count - synapse_current_count
                 synapse_inactive_count = synapse_max_count - synapse_current_count
@@ -797,6 +797,8 @@ def run_net(tr):
         synei_scaling.active=False
     if tr.strct_active:
         strctplst.active=False
+    if tr.adjust_insertP:
+        update_insP.active=False
     SynEE.stdp_active=0
     if tr.istdp_active:
         SynEI.stdp_active=0
