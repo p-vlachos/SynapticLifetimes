@@ -537,9 +537,10 @@ def run_net(tr):
                 synapse_current_count : 1 (shared)
                 synapse_needed_count : 1 (shared)
                 synapse_inactive_count : 1 (shared)
-        """)
+        """, namespace=namespace)
         if tr.adjust_insertP_mode == "adjust_rate":
-            growth_updater.run_regularly('insert_P_post *= 0.1/c_pre',
+            # multiplicative adjustment towards an active fraction of p_ee
+            growth_updater.run_regularly('insert_P_post *= p_ee/c_pre',
                                          when='after_groups', dt=tr.csample_dt,
                                          name='update_insP')
         elif tr.adjust_insertP_mode == "constant_count":

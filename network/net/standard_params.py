@@ -320,8 +320,11 @@ adjust_insertP_mode = "adjust_rate"
 """
 modes for homeostatic adjustment of growth rate:
 
-  - ```adjust_rate```
-  - ```constant_count``` adjust growth rate so that number of synapses stays roughly constant
+  - ```adjust_rate``` multiply insert_P by p_ee/(active fraction) every csample_dt, so that the
+    fraction of active EE synapses approaches p_ee
+  - ```constant_count``` set insert_P every csample_dt so that the expected number of insertions
+    replaces the missing synapses; the number of active synapses then stays close to its initial value
+    (slightly below it, by about the number of prunings per structural plasticity step)
 """
 csample_dt = 10*second
 """dt for insertP homeostasis mechanism"""
