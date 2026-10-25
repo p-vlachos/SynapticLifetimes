@@ -99,17 +99,19 @@ synEE_pre_exp   = '''
 synEE_pre_biexp = '''
                   xge_post += syn_active*a/norm_f_EE
                   '''
-synEE_pre_STDP = "Apre = syn_active*Aplus"
+# STDP with all-to-all spike interactions: every spike adds to its trace
+# (Song, Miller & Abbott 2000); the weight changes are applied in syn_pre_STDP / syn_post_STDP
+synEE_pre_STDP = "Apre += syn_active*Aplus"
 
 
 synEI_pre_exp   = '''
                   gi_post += syn_active*a
-                  Apre = syn_active*Aplus
+                  Apre += syn_active*Aplus
                   '''
 
 synEI_pre_biexp = '''
                   xgi_post += syn_active*a/norm_f_EI
-                  Apre = syn_active*Aplus
+                  Apre += syn_active*Aplus
                   '''
 
 
@@ -128,7 +130,7 @@ synEI_pre_rec = '''
 
 
 syn_post = '''
-           Apost = syn_active*Aminus
+           Apost += syn_active*Aminus
            '''
 
 syn_post_STDP = '''
