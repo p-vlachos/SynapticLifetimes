@@ -1,7 +1,6 @@
 
 import numpy as np
 from brian2.units import um, meter
-import scipy.spatial.distance as scipydist
 
 
 def generate_connections(N_tar, N_src, p, same=False):
@@ -76,127 +75,72 @@ def generate_full_connectivity(Nsrc, Ntar=0, same=True):
         return np.array(i), np.array(j)
 
 
-# distance dependent connectivity
-# there are 2 methods for generating ddcon: generate_dd_connectivity2 is based on Miner(2016), 
-# generate_dd_connectivity uses a bit different approach(see method desc).
+# distance dependent connectivity (neurons on a square sheet), following Miner & Triesch (2016)
 
 def gaussian(x, u, s):
     g = (2 / np.sqrt(2 * np.pi * s * s)) * np.exp(-(x - u) * (x - u) / (2 * s * s))  # gaussian used in Miner paper
     return g
 
 
-def generate_dd_connectivity2(tar_x, tar_y, src_x, src_y, g_halfwidth, grid_size, grid_wrap, same=True, sparseness=1):
+def distances(src_x, src_y, tar_x, tar_y, grid_size, grid_wrap):
     """
-        Generates distance-dependent connectivity.
-        Self-connections and multiple connections between one target-source pair are omitted.
-        Implementation is based on Miner(2016).
-
-        :param tar_x: target pool x coordinates array (unitless)
-        :param tar_y: target pool y coordinates array (unitless)
-        :param src_x: source pool x coordinates array (unitless)
-        :param src_y: source pool x coordinates array (unitless)
-        :param g_halfwidth: gaussian half-width (microns)
-        :param same: True is source and target pools are the same, False otherwise
-        :param sparseness: connections sparseness, value from [0 1], 1 means full connectivity
-        :return: ordered source and target indexes arrays.
-        """
-    # calculate gaussian
-    n_tar = np.size(tar_x)
-    n_src = np.size(src_x)
-    targets = np.vstack([tar_x, tar_y]).T
-    sources = np.vstack([src_x, src_y]).T
-
+        Distances between all source (rows) and target (columns) neurons, without units
+        (positions and grid_size in metre). With grid_wrap, the sheet is a torus.
+    """
+    d = np.abs(np.stack([src_x, src_y], axis=1)[:, None, :] -
+               np.stack([tar_x, tar_y], axis=1)[None, :, :])
     if grid_wrap:
-        def toroidal_distance_metric(grid_size):
-            def toroidal_distance(src, tgt):
-                d = np.abs(src - tgt)
-                indices = d > (grid_size / 2)
-                d[indices] = grid_size - d[indices]
-                return np.sqrt(np.sum(d ** 2))
-            return toroidal_distance
+        d = np.where(d > grid_size/2, grid_size - d, d)
+    return np.sqrt(np.sum(d**2, axis=-1))
 
-        dist = scipydist.cdist(sources, targets, toroidal_distance_metric(grid_size/meter))
-    else:
-        dist = scipydist.cdist(sources, targets)
 
-    p_ = gaussian(dist * meter / um, 0, np.array(g_halfwidth / um))
+def generate_dd_connectivity(tar_x, tar_y, src_x, src_y, sigma, grid_size, grid_wrap, same=True, sparseness=1):
+    """
+        Generates distance-dependent connectivity: each source-target pair is connected
+        independently with probability min(1, c*p(d)), where p(d) is a Gaussian of the distance d
+        with standard deviation sigma, and c is chosen such that the expected number of connections
+        is sparseness*(number of possible pairs). As long as c*p(d) <= 1 for all pairs, this is the
+        same distance dependence as for the insertion of new EE synapses by structural plasticity
+        (insert_P*p_distance). If the sparseness is too high for a Gaussian profile with this sigma,
+        all close pairs are connected (clipped Gaussian).
+        Self-connections are omitted if source and target pool are the same.
 
+        :param tar_x, tar_y: target pool coordinates (in metre, without units)
+        :param src_x, src_y: source pool coordinates (in metre, without units)
+        :param sigma: standard deviation of the Gaussian (with units)
+        :param grid_size: side length of the square sheet (with units)
+        :param grid_wrap: if true, the sheet is a torus
+        :param same: True if source and target pools are the same, False otherwise
+        :param sparseness: expected fraction of connected pairs, from [0 1]
+        :return: source indices, target indices, matrix of p(d) (sources x targets),
+                 matrix of distances in metre (sources x targets)
+    """
+    dist = distances(src_x, src_y, tar_x, tar_y, grid_size/meter, grid_wrap)
+    n_src, n_tar = dist.shape
+
+    p_ = gaussian(dist * meter / um, 0, np.array(sigma / um))
     if same:
         np.fill_diagonal(p_, 0.0)
 
-    # calculate connections matrix and indexes arrays
+    n_pairs = (n_src-1) * n_tar if same else n_src * n_tar
+    n_expected = sparseness * n_pairs
+    c = n_expected / np.sum(p_)
+    if c * np.max(p_) > 1:
+        # clipped Gaussian: find c such that sum(min(1, c*p)) is the expected count
+        if n_expected > np.count_nonzero(p_):
+            raise ValueError(f"Cannot create {n_expected:.0f} connections from {np.count_nonzero(p_)} pairs")
+        lo, hi = c, c
+        while np.minimum(1, hi*p_).sum() < n_expected:
+            hi *= 2
+        for _ in range(100):
+            c = (lo + hi) / 2
+            if np.minimum(1, c*p_).sum() < n_expected:
+                lo = c
+            else:
+                hi = c
+        print(f"Distance-dependent connectivity (sigma {sigma}, sparseness {sparseness}): "
+              f"connection probability clipped to 1 for {np.mean(c*p_ >= 1):.1%} of the pairs")
+    p_connect = np.minimum(1, c*p_)
 
-    # determine number of connections to create based on sparseness
-    if same:
-        n_new = int(round((n_src-1) * n_tar * sparseness))
-    else:
-        n_new = int(round(n_src * n_tar * sparseness))
-
-    p_flat = p_.flatten()
-    indices = (np.ones_like(p_)).nonzero()  # we just need tuples of all indices
-    n_indices = len(indices[0])
-    selected_indices = np.random.choice(np.arange(0, n_indices), replace=False, size=n_new, p=p_flat / np.sum(p_flat))
-    # np.random.choice gives us exactly as many connections as we request, but requires p to sum up to 1
-    in_src, in_trg = indices[0][selected_indices], indices[1][selected_indices]
+    in_src, in_trg = np.nonzero(np.random.uniform(size=p_.shape) < p_connect)
     return in_src, in_trg, p_, dist
-
-
-# def generate_dd_connectivity(tar_x, tar_y, src_x, src_y, g_halfwidth, same=True, sparseness=1):
-#     """
-#     Generates distance-dependent connectivity.
-#     Self-connections and multiple connections between one target-source pair are omitted.
-
-#     Implementation is PARTLY based on Miner(2016). In this implementation (1) all connections are generated based on
-#     gaussian probability and (2) only subset of generated connections is made active, size of subset is determined by
-#     sparseness parameter.
-#     This method creates less connections compared to generate_dd_connectivity2
-
-#     :param tar_x: target pool x coordinates array (unitless)
-#     :param tar_y: target pool y coordinates array (unitless)
-#     :param src_x: source pool x coordinates array (unitless)
-#     :param src_y: source pool x coordinates array (unitless)
-#     :param g_halfwidth: gaussian half-width (microns)
-#     :param same: True is source and target pools are the same, False otherwise
-#     :param sparseness: connections sparseness, value from [0 1], 1 means full connectivity
-#     :return: ordered source and target indexes arrays.
-#     """
-#     # calculate gaussian
-#     n_tar = np.size(tar_x)
-#     n_src = np.size(src_x)
-#     p_ = np.zeros((n_src, n_tar))
-#     for i in range(n_src):
-#         for j in range(n_tar):
-#             if not same or (same and not (i == j)):
-#                 dx = tar_x[j] - src_x[i]
-#                 dy = tar_y[j] - src_y[i]
-#                 p_[i, j] = gaussian(np.sqrt(dx ** 2 + dy ** 2), 0, np.array(g_halfwidth))
-
-#     # calculate connections matrix and indexes arrays
-#     conn = np.zeros((n_src, n_tar))  # connectivity matrix
-#     in_src = []  # list with source indexes
-#     in_trg = []  # list with target indexes
-#     nums = np.random.uniform(size=n_src*n_tar)
-#     for i in range(n_src):
-#         for j in range(n_tar):
-#             if nums[i*(n_tar-1) + j] < p_[i, j]:
-#                 in_src.append(i)
-#                 in_trg.append(j)
-#                 conn[i, j] = 1  # just indicate a connection, no weight set
-
-#     # make only subset of connections active
-#     if sparseness == 1:
-#         print('sparseness is 1, all connections are active ')
-#         in_src_active = np.array(in_src)
-#         in_trg_active = np.array(in_trg)
-#     else:
-#         print('sparseness is ' + str(sparseness))
-#         n_conn = int(np.size(in_src) * sparseness)
-#         active_conn = np.random.choice([*range(np.size(in_src))], size=n_conn, replace=False)
-
-#         in_src_arr = np.array(in_src)
-#         in_trg_arr = np.array(in_trg)
-
-#         in_src_active = in_src_arr[active_conn]
-#         in_trg_active = in_trg_arr[active_conn]
-
-#     return in_src_active, in_trg_active

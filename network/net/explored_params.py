@@ -33,7 +33,7 @@ input_dict = {'T1': [10 * second],
               'a_ii': [0.0438*ifactor*2.5],
 
               'ddcon_active': [1],
-              'half_width': [150*um],
+              'sigma_dd': [150*um],
               'grid_wrap': [1],
 
               'syn_delay_active': [1],

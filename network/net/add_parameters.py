@@ -167,7 +167,8 @@ def add_params(tr):
     # distance-dependent connectivity
     tr.f_add_parameter('netw.config.ddcon_active', prm.ddcon_active)
     tr.f_add_parameter('netw.grid_size', prm.grid_size)
-    tr.f_add_parameter('netw.half_width', prm.half_width)
+    tr.f_add_parameter('netw.sigma_dd', prm.sigma_dd)
+    tr.f_add_parameter('netw.sigma_dd_inh', prm.sigma_dd_inh)
     tr.f_add_parameter('netw.mod.ddcon', mod.ddcon)
     tr.f_add_parameter('netw.grid_wrap', prm.grid_wrap)
 

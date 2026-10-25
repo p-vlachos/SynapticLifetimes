@@ -31,7 +31,7 @@ def synapse_dd_delays(dist, src, tar, Syn: Synapses, velocity, rel_sd):
         deviation proportional to the mean (negative values are set to zero).
 
         :param dist: distance matrix (in metre, without units) between all source (rows)
-                     and target (columns) neurons, as returned by ``generate_dd_connectivity2``
+                     and target (columns) neurons, as returned by ``generate_dd_connectivity``
         :param src, tar: source and target indices of the synapses of ``Syn``
 
         Related parameters:

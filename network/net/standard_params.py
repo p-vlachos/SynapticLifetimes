@@ -241,9 +241,11 @@ ddcon_active = 0
 """enable/disable distance-dependent connectivity"""
 grid_size = 1000*um
 """side length of the square-shaped plane"""
-half_width = 200*um
-"""half-width in gaussian probability density function, see Miner et al (2016) for 
-an explanation why 200um is a good value"""
+sigma_dd = 200*um
+"""standard deviation of the Gaussian distance dependence of the connection probability,
+see Miner et al (2016) for an explanation why 200um is a good value"""
+sigma_dd_inh = 0*um
+"""like sigma_dd, for the connections E->I, I->E and I->I; 0 means the same as sigma_dd"""
 grid_wrap = 0
 """ If 1, wrap the grid around the edges to the opposite edge. """
 

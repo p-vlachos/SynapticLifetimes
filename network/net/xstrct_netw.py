@@ -4,12 +4,12 @@ import os, shutil, pickle, logging, neo
 from . import models as mod, network_features
 from .brian2objects.binnedactivitymonitor import BinnedActivityMonitor
 from .utils import generate_connections, generate_full_connectivity, \
-                   generate_N_connections, generate_dd_connectivity2
+                   generate_N_connections, generate_dd_connectivity
 
 import numpy as np
 import pypet
 
-from brian2.units import ms,mV,second,metre
+from brian2.units import ms,mV,second,metre,um
 
 from brian2 import NeuronGroup, StateMonitor, SpikeMonitor, \
                    PoissonGroup, Synapses, set_device, device, Clock, \
@@ -299,10 +299,13 @@ def run_net(tr):
     SynEE.Aplus = tr.Aplus
     SynEE.Aminus = tr.Aminus
 
+    # connections involving inhibitory neurons can have a different spatial extent
+    sigma_dd_inh = tr.sigma_dd_inh if tr.sigma_dd_inh > 0*um else tr.sigma_dd
+
     if tr.ddcon_active:
-        sEI_src, sEI_tar, _, dist_EI = generate_dd_connectivity2(np.array(GExc.x), np.array(GExc.y),
+        sEI_src, sEI_tar, _, dist_EI = generate_dd_connectivity(np.array(GExc.x), np.array(GExc.y),
                                                         np.array(GInh.x), np.array(GInh.y),
-                                                        tr.half_width, tr.grid_size, tr.grid_wrap,
+                                                        sigma_dd_inh, tr.grid_size, tr.grid_wrap,
                                                         same=False, sparseness=tr.p_ei)
     else:
         sEI_src, sEI_tar, _, _ = generate_connections(tr.N_e, tr.N_i, tr.p_ei)
@@ -314,14 +317,14 @@ def run_net(tr):
     if tr.istdp_active:        
         SynEI.taupre, SynEI.taupost = tr.taupre_EI, tr.taupost_EI
 
-    sIE_src, sIE_tar, _, dist_IE = generate_dd_connectivity2(np.array(GInh.x), np.array(GInh.y),
+    sIE_src, sIE_tar, _, dist_IE = generate_dd_connectivity(np.array(GInh.x), np.array(GInh.y),
                                                     np.array(GExc.x), np.array(GExc.y),
-                                                    tr.half_width, tr.grid_size, tr.grid_wrap,
+                                                    sigma_dd_inh, tr.grid_size, tr.grid_wrap,
                                                     same=False, sparseness=tr.p_ie) if tr.ddcon_active \
         else generate_connections(tr.N_i, tr.N_e, tr.p_ie)
-    sII_src, sII_tar, _, dist_II = generate_dd_connectivity2(np.array(GInh.x), np.array(GInh.y),
+    sII_src, sII_tar, _, dist_II = generate_dd_connectivity(np.array(GInh.x), np.array(GInh.y),
                                                     np.array(GInh.x), np.array(GInh.y),
-                                                    tr.half_width,  tr.grid_size, tr.grid_wrap,
+                                                    sigma_dd_inh,  tr.grid_size, tr.grid_wrap,
                                                     sparseness=tr.p_ii) if tr.ddcon_active \
         else generate_connections(tr.N_i, tr.N_i, tr.p_ii, same=True)
 
@@ -370,9 +373,9 @@ def run_net(tr):
 
     # initially active EE synapses
     if tr.ddcon_active:
-        sEE_src_dd, sEE_tar_dd, sEE_p, dist_EE = generate_dd_connectivity2(np.array(GExc.x), np.array(GExc.y),
+        sEE_src_dd, sEE_tar_dd, sEE_p, dist_EE = generate_dd_connectivity(np.array(GExc.x), np.array(GExc.y),
                                                                   np.array(GExc.x), np.array(GExc.y),
-                                                                  tr.half_width, tr.grid_size, tr.grid_wrap,
+                                                                  tr.sigma_dd, tr.grid_size, tr.grid_wrap,
                                                                   sparseness=tr.p_ee)
         # sEE_p is the full N_e x N_e matrix (incl. the diagonal), pick
         # the entries of the synapses in SynEE's order
