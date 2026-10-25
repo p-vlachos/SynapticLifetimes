@@ -3,7 +3,6 @@ from pypet import cartesian_product
 
 
 input_dict = {'random_seed' : [511, 511, 7124],
-              'crs_crrs_rec': [0],
               'syn_scl_rec' : [0],
               'syn_iscl_rec' : [0],
               'synEE_rec': [0],

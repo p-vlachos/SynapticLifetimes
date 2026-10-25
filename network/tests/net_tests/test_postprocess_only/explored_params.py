@@ -3,7 +3,6 @@ from pypet import cartesian_product
 
 
 input_dict = {'N_e': [350,400],
-              'crs_crrs_rec': [0],
               'syn_scl_rec' : [0],
               'syn_iscl_rec' : [0],
               'synEE_rec': [0],

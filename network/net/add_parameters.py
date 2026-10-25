@@ -175,11 +175,9 @@ def add_params(tr):
 
     # recording
     tr.f_add_parameter('netw.rec.memtraces_rec', prm.memtraces_rec)
-    tr.f_add_parameter('netw.rec.vttraces_rec', prm.vttraces_rec)
     tr.f_add_parameter('netw.rec.getraces_rec', prm.getraces_rec)
     tr.f_add_parameter('netw.rec.gitraces_rec', prm.gitraces_rec)
     tr.f_add_parameter('netw.rec.gfwdtraces_rec', prm.gfwdtraces_rec)
-    tr.f_add_parameter('netw.rec.rates_rec', prm.rates_rec)
     tr.f_add_parameter('netw.rec.anormtar_rec', prm.anormtar_rec)
 
     tr.f_add_parameter('netw.rec.nrec_GExc_stat', prm.nrec_GExc_stat)
@@ -224,7 +222,6 @@ def add_params(tr):
     tr.f_add_parameter('netw.synee_a_nrecpoints', prm.synee_a_nrecpoints)
     tr.f_add_parameter('netw.synei_a_nrecpoints', prm.synei_a_nrecpoints)
     
-    tr.f_add_parameter('netw.crs_crrs_rec', prm.crs_crrs_rec)
 
     tr.f_add_parameter('netw.adjust_insertP', prm.adjust_insertP)
     tr.f_add_parameter('netw.adjust_insertP_mode', prm.adjust_insertP_mode)

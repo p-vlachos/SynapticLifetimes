@@ -2,8 +2,7 @@ from brian2.units import ms, mV, second, Hz
 from pypet import cartesian_product
 
 
-input_dict = {'crs_crrs_rec': [0],
-              'syn_scl_rec' : [0],
+input_dict = {'syn_scl_rec' : [0],
               'syn_iscl_rec' : [0],
               'synEE_rec': [0],
               'synEI_rec': [0],

@@ -251,12 +251,9 @@ grid_wrap = 0
 
 # recording
 memtraces_rec = 1
-vttraces_rec = 1
 getraces_rec = 1
 gitraces_rec = 1
 gfwdtraces_rec = 1
-rates_rec = 1
-"""additionally to recording averaged rates from EE and EI groups each per time step, record smoothed rates over 25ms"""
 anormtar_rec = 0
 """record ATotalMax, only really makes sense when being used with `scl_mode` = 'proportional'"""
 
@@ -310,8 +307,6 @@ synee_a_nrecpoints = 10
 synei_a_nrecpoints = 10
 """desired magnitude of EI synaptic recordings"""
 
-crs_crrs_rec = 1
-"""record and calculate cross-correlations between pre-synaptic and post-synaptic spike trains"""
 
 adjust_insertP = 0
 """enable/disable homeostasis mechanism for EE synapse insertion probability"""

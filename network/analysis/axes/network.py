@@ -6,19 +6,17 @@ from brian2.units import mV, ms, second, Hz
 import mrestimator as mre
 import scipy.signal 
 
+from ..utils import population_rate
+
 
 def inst_rates(ax, bpath, nsp, tmin, tmax):
 
     try:
     
-        with open(bpath+'/raw/gexc_rate.p', 'rb') as pfile:
-            GExc_rate = pickle.load(pfile)
-            GExc_smr = pickle.load(pfile)
-        with open(bpath+'/raw/ginh_rate.p', 'rb') as pfile:
-            GInh_rate = pickle.load(pfile)
-            GInh_smr = pickle.load(pfile)
-        # with open(bpath+'/raw/pinp_rate.p', 'rb') as pfile:
-        #     PInp_rate = pickle.load(pfile)
+        GExc_rate = population_rate(bpath, nsp, 'exc', smooth_width=25*ms)
+        GExc_smr = GExc_rate['smooth_rate']
+        GInh_rate = population_rate(bpath, nsp, 'inh', smooth_width=25*ms)
+        GInh_smr = GInh_rate['smooth_rate']
 
 
         
@@ -65,14 +63,10 @@ def inst_rates_with_peaks(ax, bpath, nsp, tmin, tmax, tmax_vis=0):
 
     try:
     
-        with open(bpath+'/raw/gexc_rate.p', 'rb') as pfile:
-            GExc_rate = pickle.load(pfile)
-            GExc_smr = pickle.load(pfile)
-        with open(bpath+'/raw/ginh_rate.p', 'rb') as pfile:
-            GInh_rate = pickle.load(pfile)
-            GInh_smr = pickle.load(pfile)
-        # with open(bpath+'/raw/pinp_rate.p', 'rb') as pfile:
-        #     PInp_rate = pickle.load(pfile)
+        GExc_rate = population_rate(bpath, nsp, 'exc', smooth_width=25*ms)
+        GExc_smr = GExc_rate['smooth_rate']
+        GInh_rate = population_rate(bpath, nsp, 'inh', smooth_width=25*ms)
+        GInh_smr = GInh_rate['smooth_rate']
 
 
         

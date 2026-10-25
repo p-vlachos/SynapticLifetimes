@@ -23,6 +23,7 @@ from brian2.units import mV, ms, second
 from .axes.neuron import *
 from .axes.synapse import *
 from .axes.parameter_display import *
+from .utils import population_rate
 
 import scipy.stats as scistats
 from typing import Dict
@@ -72,9 +73,8 @@ def fourier_data(ax1, ax2, colormap, dt, nsp, spk_count, nperseg = 10240):
 
 
 def plot_smoothed_rate(axr, bpath, nsp):
-    with open(bpath+'/raw/gexc_rate.p', 'rb') as pfile:
-        rate = pickle.load(pfile)
-        smth = pickle.load(pfile)
+    rate = population_rate(bpath, nsp, 'exc', smooth_width=25*ms)
+    smth = rate['smooth_rate']
     begin_t = (nsp['T1']+nsp['T2']+nsp['T3']+nsp['T4'])
     end_t = begin_t + nsp['T5']
     indices = rate['t'] > begin_t

@@ -115,9 +115,7 @@ input_dict = {'T1': [10 * second],
               'iATotalMax': [3.4*ifactor],
 
               # Recording parameters
-              'crs_crrs_rec': [0],      # Calc and record correlation
               'memtraces_rec': [1],
-              'vttraces_rec': [1],
               'getraces_rec': [1],
               'gitraces_rec': [1],
               'nrec_GExc_stat': [400],
@@ -144,7 +142,6 @@ input_dict = {'T1': [10 * second],
               'syndynrec_npts': [10],
               'turnover_rec': [1],
               'T2_spks_rec': [0],
-              'rates_rec': [1],
               'anormtar_rec': [1],
               'syn_scl_rec': [0],
               'syn_iscl_rec': [0],

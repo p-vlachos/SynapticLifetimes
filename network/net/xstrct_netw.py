@@ -1,5 +1,5 @@
 
-import os, shutil, pickle, logging, neo
+import os, shutil, pickle
 
 from . import models as mod, network_features
 from .brian2objects.binnedactivitymonitor import BinnedActivityMonitor
@@ -13,12 +13,8 @@ from brian2.units import ms,mV,second,metre,um
 
 from brian2 import NeuronGroup, StateMonitor, SpikeMonitor, \
                    PoissonGroup, Synapses, set_device, device, Clock, \
-                   defaultclock, prefs, Network, PopulationRateMonitor, seed
+                   defaultclock, prefs, Network, seed
 
-import elephant.utils
-from elephant.conversion import BinnedSpikeTrain
-from elephant.spike_train_correlation import cch
-import quantities as pq
 
 from .run_routines import run_phase, run_T2_syndynrec
 
@@ -573,8 +569,6 @@ def run_net(tr):
     GExc_recvars = []
     if tr.memtraces_rec:
         GExc_recvars.append('V')
-    if tr.vttraces_rec:
-        GExc_recvars.append('Vt')
     if tr.getraces_rec:
         GExc_recvars.append('ge')
     if tr.gitraces_rec:
@@ -633,9 +627,6 @@ def run_net(tr):
     GExc_spks = SpikeMonitor(GExc)
     GInh_spks = SpikeMonitor(GInh)
 
-    GExc_rate = PopulationRateMonitor(GExc)
-    GInh_rate = PopulationRateMonitor(GInh)
-
     if tr.population_binned_rec:
         GExc_binned = BinnedActivityMonitor(GExc, dtype=np.uint16)
         GInh_binned = BinnedActivityMonitor(GInh, dtype=np.uint16)
@@ -643,8 +634,7 @@ def run_net(tr):
 
     if tr.external_mode=='poisson':
         PInp_spks = SpikeMonitor(PInp)
-        PInp_rate = PopulationRateMonitor(PInp)
-        netw_objects.extend([PInp_spks,PInp_rate])
+        netw_objects.extend([PInp_spks])
 
 
     if tr.synee_a_nrecpoints==0 or tr.sim.T2==0*second:
@@ -693,8 +683,7 @@ def run_net(tr):
 
     netw_objects.extend([GExc_stat, GInh_stat,
                          SynEE_stat, SynEE_a, 
-                         GExc_spks, GInh_spks,
-                         GExc_rate, GInh_rate])
+                         GExc_spks, GInh_spks])
 
     if (tr.synEEdynrec and
         (2*tr.syndynrec_npts*tr.syndynrec_dt < tr.sim.T2) ):
@@ -737,8 +726,7 @@ def run_net(tr):
 
     T1T3_recorders = [GExc_spks, GInh_spks, 
                       SynEE_stat, 
-                      GExc_stat, GInh_stat,
-                      GExc_rate, GInh_rate]
+                      GExc_stat, GInh_stat]
 
     if tr.istdp_active:
         T1T3_recorders.append(SynEI_stat)
@@ -747,7 +735,7 @@ def run_net(tr):
     set_active(*T1T3_recorders)
 
     if tr.external_mode=='poisson':
-        set_active(PInp_spks, PInp_rate)
+        set_active(PInp_spks)
        
     run_phase(net, tr.sim.T1, 'T1')
 
@@ -762,7 +750,7 @@ def run_net(tr):
         set_active(GExc_spks, GInh_spks)
     
     if tr.external_mode=='poisson':
-        set_inactive(PInp_spks, PInp_rate)
+        set_inactive(PInp_spks)
 
     run_T2_syndynrec(net, tr)
 
@@ -773,7 +761,7 @@ def run_net(tr):
     set_active(*T1T3_recorders)
     
     if tr.external_mode=='poisson':
-        set_active(PInp_spks, PInp_rate)
+        set_active(PInp_spks)
     
     run_phase(net, tr.sim.T3, 'T3')
     
@@ -783,12 +771,12 @@ def run_net(tr):
     set_inactive(*T1T3_recorders)
 
     if tr.external_mode=='poisson':
-        set_inactive(PInp_spks, PInp_rate)
+        set_inactive(PInp_spks)
 
     run_phase(net, tr.sim.T4, 'T4')
 
     # --------- T5 ---------
-    # freeze network and record Exc spikes for cross correlations
+    # freeze network and record spikes
 
     if tr.scl_active:
         synee_scaling.active=False
@@ -807,7 +795,6 @@ def run_net(tr):
         # otherwise we use a simplified model and don't have this parameter
         SynEI.syn_noise_active = 0
 
-    set_active(GExc_rate, GInh_rate)
     set_active(GExc_spks, GInh_spks)
 
     run_phase(net, tr.sim.T5, 'T5')
@@ -870,19 +857,11 @@ def run_net(tr):
                             pfile)            
         
     with open(raw_dir+'synee_a.p','wb') as pfile:
-        SynEE_a_states = SynEE_a.get_states()
-        if tr.crs_crrs_rec:
-            SynEE_a_states['i'] = list(SynEE.i)
-            SynEE_a_states['j'] = list(SynEE.j)
-        pickle.dump(SynEE_a_states,pfile)
+        pickle.dump(SynEE_a.get_states(),pfile)
 
     if tr.synei_a_nrecpoints>0 and tr.sim.T2 > 0.*second:
         with open(raw_dir+'synei_a.p','wb') as pfile:
-            SynEI_a_states = SynEI_a.get_states()
-            if tr.crs_crrs_rec:
-                SynEI_a_states['i'] = list(SynEI.i)
-                SynEI_a_states['j'] = list(SynEI.j)
-            pickle.dump(SynEI_a_states,pfile)
+            pickle.dump(SynEI_a.get_states(),pfile)
         
 
     with open(raw_dir+'gexc_spks.p','wb') as pfile:
@@ -894,26 +873,11 @@ def run_net(tr):
         with open(raw_dir+'pinp_spks.p','wb') as pfile:
             pickle.dump(PInp_spks.get_states(),pfile)
 
-    with open(raw_dir+'gexc_rate.p','wb') as pfile:
-        pickle.dump(GExc_rate.get_states(),pfile)
-        if tr.rates_rec:
-            pickle.dump(GExc_rate.smooth_rate(width=25*ms),pfile)   
-    with open(raw_dir+'ginh_rate.p','wb') as pfile:
-        pickle.dump(GInh_rate.get_states(),pfile)
-        if tr.rates_rec:
-            pickle.dump(GInh_rate.smooth_rate(width=25*ms),pfile)
-
     if tr.population_binned_rec:
         with open(raw_dir+'gexc_binned.p', 'wb') as pfile:
             pickle.dump(GExc_binned.get_states(),pfile)
         with open(raw_dir+'ginh_binned.p', 'wb') as pfile:
             pickle.dump(GInh_binned.get_states(),pfile)
-
-    if tr.external_mode=='poisson':
-        with open(raw_dir+'pinp_rate.p','wb') as pfile:
-            pickle.dump(PInp_rate.get_states(),pfile)
-            if tr.rates_rec:
-                pickle.dump(PInp_rate.smooth_rate(width=25*ms),pfile)   
 
 
     # ----------------- add raw data ------------------------
@@ -936,117 +900,6 @@ def run_net(tr):
         with open(raw_dir+fname+'.p','wb') as pfile:
             pickle.dump(data,pfile)
 
-
-
-    # --------------- cross-correlations ---------------------
-
-    if tr.crs_crrs_rec:
-
-        # spike times lie on the dt grid, i.e. often exactly on bin edges;
-        # elephant correctly shifts them into the next bin but logs a
-        # warning for every single spike train
-        logging.getLogger(elephant.utils.__file__).addFilter(
-            lambda record: 'rounding errors' not in record.getMessage())
-
-        GExc_spks = GExc_spks.get_states()
-        synee_a = SynEE_a_states
-        wsize = 100*pq.ms
-
-        for binsize in [1*pq.ms, 2*pq.ms, 5*pq.ms]: 
-
-            wlen = int(wsize/binsize)
-
-            ts, idxs = GExc_spks['t'], GExc_spks['i']
-            idxs = idxs[ts>tr.T1+tr.T2+tr.T3+tr.T4]
-            ts = ts[ts>tr.T1+tr.T2+tr.T3+tr.T4]
-            ts = ts - (tr.T1+tr.T2+tr.T3+tr.T4)
-
-            sts = [neo.SpikeTrain(ts[idxs==i]/second*pq.s,
-                                  t_stop=tr.T5/second*pq.s) for i in
-                   range(tr.N_e)]
-
-            crs_crrs, syn_a = [], []
-
-            for f,(i,j) in enumerate(zip(synee_a['i'], synee_a['j'])):
-                if synee_a['syn_active'][-1][f]==1:
-
-                    crs_crr, cbin = cch(BinnedSpikeTrain(sts[i],
-                                                         bin_size=binsize),
-                                        BinnedSpikeTrain(sts[j],
-                                                         bin_size=binsize),
-                                        cross_correlation_coefficient=True,
-                                        border_correction=True,
-                                        window=(-1*wlen,wlen))
-
-                    crs_crrs.append(list(np.array(crs_crr).T[0]))
-                    syn_a.append(synee_a['a'][-1][f])
-
-
-            fname = 'crs_crrs_wsize%dms_binsize%fms_full' %(wsize/pq.ms,
-                                                            binsize/pq.ms)
-
-            df = {'cbin': cbin, 'crs_crrs': np.array(crs_crrs),
-                  'syn_a': np.array(syn_a), 'binsize': binsize,
-                  'wsize': wsize, 'wlen': wlen}
-
-
-            with open('builds/%.4d/raw/'%(tr.v_idx)+fname+'.p', 'wb') as pfile:
-                pickle.dump(df, pfile)
-
-
-        GInh_spks = GInh_spks.get_states()
-        synei_a = SynEI_a_states
-        wsize = 100*pq.ms
-
-        for binsize in [1*pq.ms, 2*pq.ms, 5*pq.ms]: 
-
-            wlen = int(wsize/binsize)
-
-            ts_E, idxs_E = GExc_spks['t'], GExc_spks['i']
-            idxs_E = idxs_E[ts_E>tr.T1+tr.T2+tr.T3+tr.T4]
-            ts_E = ts_E[ts_E>tr.T1+tr.T2+tr.T3+tr.T4]
-            ts_E = ts_E - (tr.T1+tr.T2+tr.T3+tr.T4)
-
-            ts_I, idxs_I = GInh_spks['t'], GInh_spks['i']
-            idxs_I = idxs_I[ts_I>tr.T1+tr.T2+tr.T3+tr.T4]
-            ts_I = ts_I[ts_I>tr.T1+tr.T2+tr.T3+tr.T4]
-            ts_I = ts_I - (tr.T1+tr.T2+tr.T3+tr.T4)
-
-            sts_E = [neo.SpikeTrain(ts_E[idxs_E==i]/second*pq.s,
-                                    t_stop=tr.T5/second*pq.s) for i in
-                     range(tr.N_e)]
-
-            sts_I = [neo.SpikeTrain(ts_I[idxs_I==i]/second*pq.s,
-                                    t_stop=tr.T5/second*pq.s) for i in
-                     range(tr.N_i)]
-
-            crs_crrs, syn_a = [], []
-
-            for f,(i,j) in enumerate(zip(synei_a['i'], synei_a['j'])):
-                if synei_a['syn_active'][-1][f]==1:
-
-                    crs_crr, cbin = cch(BinnedSpikeTrain(sts_I[i],
-                                                         bin_size=binsize),
-                                        BinnedSpikeTrain(sts_E[j],
-                                                         bin_size=binsize),
-                                        cross_correlation_coefficient=True,
-                                        border_correction=True,
-                                        window=(-1*wlen,wlen))
-
-                    crs_crrs.append(list(np.array(crs_crr).T[0]))
-                    syn_a.append(synei_a['a'][-1][f])
-
-
-            fname = 'EI_crrs_wsize%dms_binsize%fms_full' %(wsize/pq.ms,
-                                                            binsize/pq.ms)
-
-            df = {'cbin': cbin, 'crs_crrs': np.array(crs_crrs),
-                  'syn_a': np.array(syn_a), 'binsize': binsize,
-                  'wsize': wsize, 'wlen': wlen}
-
-
-            with open('builds/%.4d/raw/'%(tr.v_idx)+fname+'.p', 'wb') as pfile:
-                pickle.dump(df, pfile)
 
 
     # -----------------  clean up  ---------------------------

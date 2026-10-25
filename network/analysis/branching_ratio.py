@@ -24,6 +24,7 @@ from .axes.network import *
 from .axes.neuron import *
 from .axes.synapse import *
 from .axes.parameter_display import *
+from .utils import population_rate
 
 import mrestimator as mre
 import scipy.stats as scistats
@@ -168,9 +169,8 @@ def branching_ratio_figure(bpath):
 
     # smoothed firing rate
     axr = axs['2,2'].twinx()
-    with open(bpath+'/raw/gexc_rate.p', 'rb') as pfile:
-        rate = pickle.load(pfile)
-        smth = pickle.load(pfile)
+    rate = population_rate(bpath, nsp, 'exc', smooth_width=25*ms)
+    smth = rate['smooth_rate']
     begin_t = (nsp['T1']+nsp['T2']+nsp['T3']+nsp['T4'])
     indices = rate['t'] > begin_t
     axr.plot(rate['t'][indices]/second - begin_t/second, smth[indices],

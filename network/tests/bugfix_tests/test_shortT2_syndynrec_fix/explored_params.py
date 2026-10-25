@@ -3,7 +3,6 @@ from pypet import cartesian_product
 
 
 input_dict = {'T2': [0.01*second],
-              'crs_crrs_rec': [0],
               'syn_scl_rec' : [0],
               'syn_iscl_rec' : [0],
               'synEE_rec': [0],

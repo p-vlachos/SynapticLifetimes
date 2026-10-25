@@ -21,9 +21,6 @@ dependencies:
     - scipy==1.18.1
     - pandas==3.1.0
     - matplotlib==3.11.2
-    - neo==0.14.6
-    - elephant==1.2.1
-    - quantities==0.16.4
     - powerlaw==2.0.0
     - mrestimator==0.2.0
     - gitpython==3.2.1

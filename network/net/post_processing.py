@@ -11,8 +11,6 @@ from analysis.methods.process_turnover_statistics import get_insert_and_prune_co
 from analysis.srvprb_EE import srvprb_EE_figure
 from analysis.branching_ratio import branching_ratio_figure
 
-from analysis.methods.resample_dA import resample_spk_register, \
-                                         resample_scl_deltas
 
 
 def post_process_turnover(tr, binning=True, from_numpy=False, turnover=None):
@@ -139,87 +137,12 @@ def post_process_per_neuron_turnover_counts(tr):
 
 
 
-def post_process_stdp_rec(tr):
-
-    bpath = 'builds/%.4d' %(tr.v_idx)
-
-    if tr.synEE_rec:
-    
-        with open(bpath+'/raw/spk_register.p', 'rb') as pfile:
-            spkr = pickle.load(pfile)
-
-        for resamp_dt in [1*second, 2*second, 5*second, 10*second]:
-
-            dA_v, a_v = resample_spk_register(spkr, tr, resamp_dt)
-
-            fname = 'stdp_dA_T%ds_bin%dms.p' %(int(tr.stdp_rec_T/second),
-                                               int(resamp_dt/second*1000))
-
-            with open(bpath+'/raw/'+fname, 'wb') as pfile:
-                pickle.dump((dA_v, a_v), pfile)
-
-    if tr.synEI_rec:
-    
-        with open(bpath+'/raw/spk_register_EI.p', 'rb') as pfile:
-            spkr = pickle.load(pfile)
-
-        for resamp_dt in [1*second, 2*second, 5*second, 10*second]:
-
-            dA_v, a_v = resample_spk_register(spkr, tr, resamp_dt)
-
-            fname = 'stdp_EI_dA_T%ds_bin%dms.p' %(int(tr.stdp_rec_T/second),
-                                                  int(resamp_dt/second*1000))
-
-            with open(bpath+'/raw/'+fname, 'wb') as pfile:
-                pickle.dump((dA_v, a_v), pfile)
-
-
-def post_process_scl_rec(tr):
-
-    bpath = 'builds/%.4d' %(tr.v_idx)
-    
-    if tr.syn_scl_rec:
-        
-        with open(bpath+'/raw/scaling_deltas.p', 'rb') as pfile:
-            scl_deltas = pickle.load(pfile)
-
-        for resamp_dt in [1*second, 2*second, 5*second, 10*second]:
-
-            dA_v, a_v = resample_scl_deltas(scl_deltas, tr, resamp_dt)
-
-            fname = 'scl_dA_T%ds_bin%dms.p' %(int(tr.scl_rec_T/second),
-                                               int(resamp_dt/second*1000))
-
-            with open(bpath+'/raw/'+fname, 'wb') as pfile:
-                pickle.dump((dA_v, a_v), pfile)
-
-    if tr.syn_iscl_rec:
-
-        with open(bpath+'/raw/scaling_deltas_EI.p', 'rb') as pfile:
-            scl_deltas = pickle.load(pfile)
-
-        for resamp_dt in [1*second, 2*second, 5*second, 10*second]:
-
-            dA_v, a_v = resample_scl_deltas(scl_deltas, tr, resamp_dt)
-
-            fname = 'scl_EI_dA_T%ds_bin%dms.p' %(int(tr.scl_rec_T/second),
-                                               int(resamp_dt/second*1000))
-
-            with open(bpath+'/raw/'+fname, 'wb') as pfile:
-                pickle.dump((dA_v, a_v), pfile)
-
-
-            
-
-
 def post_process(tr):
 
     want_postprocess = tr.T5 > 50*second
 
     if want_postprocess:
         branching_ratio_figure(f'builds/{tr.v_idx:04d}')
-    post_process_stdp_rec(tr)
-    post_process_scl_rec(tr)
 
     if tr.turnover_rec and want_postprocess:
 
