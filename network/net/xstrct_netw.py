@@ -12,7 +12,7 @@ import pypet
 from brian2.units import ms,mV,second,metre,um
 
 from brian2 import NeuronGroup, StateMonitor, SpikeMonitor, \
-                   PoissonGroup, Synapses, set_device, device, \
+                   PoissonGroup, Synapses, set_device, device, Clock, \
                    defaultclock, prefs, Network, PopulationRateMonitor, seed
 
 import elephant.utils
@@ -198,10 +198,10 @@ def run_net(tr):
         
     if tr.syn_noise:
         synEE_mod = '''%s 
-                       %s''' %(tr.syn_noise_mod, tr.synEE_mod)
+                       %s''' %(tr.syn_noise_vars, tr.synEE_mod)
 
         synEI_mod = '''%s 
-                       %s''' %(tr.syn_noise_mod, tr.synEE_mod)
+                       %s''' %(tr.syn_noise_vars, tr.synEE_mod)
     else:
         synEE_mod = '''%s 
                        %s''' %(tr.synEE_static, tr.synEE_mod)
@@ -247,7 +247,7 @@ def run_net(tr):
     # E<-E advanced synapse model
     SynEE = Synapses(target=GExc, source=GExc, model=synEE_mod,
                      on_pre=synEE_pre_mod, on_post=synEE_post_mod,
-                     namespace=namespace, dt=tr.synEE_mod_dt)
+                     namespace=namespace)
 
 
     
@@ -278,7 +278,7 @@ def run_net(tr):
     if tr.istdp_active:
         SynEI = Synapses(target=GExc, source=GInh, model=synEI_mod,
                          on_pre=synEI_pre_mod, on_post=synEI_post_mod,
-                         namespace=namespace, dt=tr.synEE_mod_dt)
+                         namespace=namespace)
     else:
         model = '''a : 1
                    syn_active : 1'''
@@ -341,15 +341,17 @@ def run_net(tr):
     tr.f_add_result('sII_tar', sII_tar)
 
 
+    # weight noise, applied every synEE_mod_dt (the synapses themselves run on the
+    # default clock, so that STDP uses the exact spike times)
     if tr.syn_noise:
         SynEE.syn_sigma = tr.syn_sigma_EE
-        SynEE.run_regularly('a = syn_active*clip(a,amin,amax)', when='after_groups',
-                            name='SynEE_noise_clipper')
+        SynEE.run_regularly(tr.syn_noise_update, dt=tr.synEE_mod_dt, when='after_groups',
+                            name='SynEE_noise')
 
     if tr.syn_noise and tr.istdp_active:
         SynEI.syn_sigma = tr.syn_sigma_EI
-        SynEI.run_regularly('a = syn_active*clip(a,amin_i,amax_i)', when='after_groups',
-                            name='SynEI_noise_clipper') 
+        SynEI.run_regularly(tr.syn_noise_update, dt=tr.synEE_mod_dt, when='after_groups',
+                            name='SynEI_noise')
 
     if tr.adjust_insertP and tr.adjust_insertP_mode == 'constant_count':
         # at t=0 the number of active synapses equals the target count, so the
@@ -434,13 +436,15 @@ def run_net(tr):
   
        
     # synaptic scaling (normalization of the input weights)
-    # the summed input weights (AsumEE, AsumEI) are updated on the synapses' clock
-    # (synEE_mod_dt), so the normalization interval has to be a multiple of it
-    if tr.scl_active or (tr.istdp_active and tr.iscl_active):
-        n_steps = float(tr.dt_synEE_scaling / tr.synEE_mod_dt)
-        if n_steps < 1 or abs(n_steps - round(n_steps)) > 1e-9:
-            raise ValueError(f"dt_synEE_scaling ({tr.dt_synEE_scaling}) must be a multiple "
-                             f"of synEE_mod_dt ({tr.synEE_mod_dt})")
+    def set_summed_variable_clock(syn, varname, dt):
+        # Brian2 updates summed variables on the clock of the target group (here every
+        # time step for 2.5M synapses); it is only needed at the normalization interval.
+        # Brian2 has no public interface for this, so the (private) clock is replaced.
+        updater = syn.summed_updaters.get(varname)
+        if updater is None or not hasattr(updater, '_clock'):
+            raise RuntimeError(f"Cannot set the clock of the summed variable {varname}; "
+                               "the Brian2 internals have changed")
+        updater._clock = Clock(dt=dt)
 
     if tr.netw.config.scl_active:
 
@@ -467,6 +471,7 @@ def run_net(tr):
             name='synEE_target_scaling'
         )
 
+        set_summed_variable_clock(SynEE, 'AsumEE_post', tr.dt_synEE_scaling)
         synee_scaling = SynEE.run_regularly(tr.synEE_scaling,
                                             dt=tr.dt_synEE_scaling,
                                             when='end',
@@ -488,6 +493,7 @@ def run_net(tr):
                                               scale=tr.sig_iATotalMax,
                                               size=tr.N_e)
 
+        set_summed_variable_clock(SynEI, 'AsumEI_post', tr.dt_synEE_scaling)
         synei_scaling = SynEI.run_regularly(tr.synEI_scaling,
                                             dt=tr.dt_synEE_scaling,
                                             when='end',

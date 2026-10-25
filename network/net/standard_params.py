@@ -160,8 +160,7 @@ syn_sigma_EE = 1e-09/second
 syn_sigma_EI = 1e-09/second
 """strength of the weight noise of EI synapses"""
 synEE_mod_dt = 100*ms
-"""time step of the synapses' continuous dynamics (weight noise and its clipping) and of the
-summed input weights used by the normalization"""
+"""interval of the weight noise updates (and the clipping of the weights to their bounds)"""
 
 #STDP
 stdp_active = 1
@@ -187,7 +186,7 @@ iAminus = -1.0
 scl_active = 1
 """EE synaptic scaling"""
 dt_synEE_scaling = 100*ms
-"""interval of the normalization of the input weights (EE and EI), a multiple of synEE_mod_dt"""
+"""interval of the normalization of the input weights (EE and EI)"""
 eta_scaling = 0.25
 
 # iscaling

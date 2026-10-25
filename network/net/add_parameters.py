@@ -82,7 +82,8 @@ def add_params(tr):
     tr.f_add_parameter('netw.synEE_mod_dt',  prm.synEE_mod_dt)
 
     tr.f_add_parameter('netw.synEE_static',  mod.synEE_static)
-    tr.f_add_parameter('netw.syn_noise_mod',  mod.syn_noise_mod)
+    tr.f_add_parameter('netw.mod.syn_noise_vars',  mod.syn_noise_vars)
+    tr.f_add_parameter('netw.mod.syn_noise_update',  mod.syn_noise_update)
     tr.f_add_parameter('netw.tau_r', prm.tau_r)
     tr.f_add_parameter('netw.synEE_scl_mod',  mod.synEE_scl_mod)
     tr.f_add_parameter('netw.synEI_scl_mod',  mod.synEI_scl_mod)

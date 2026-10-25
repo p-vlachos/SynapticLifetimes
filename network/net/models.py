@@ -57,8 +57,12 @@ syn_cond_EI_biexp = '''
 
 synEE_static = 'a : 1'
 # multiplicative weight noise, used for EE and EI synapses
-syn_noise_mod = '''da/dt = syn_noise_active*syn_active*a*syn_sigma**0.5*xi : 1
-                   syn_sigma : 1/second (shared)'''
+syn_noise_vars = '''a : 1
+                  syn_sigma : 1/second (shared)'''
+# exact update of the (Stratonovich) multiplicative weight noise da/dt = a*sqrt(syn_sigma)*xi
+# over an interval of synEE_mod_dt, followed by clipping to the weight bounds
+syn_noise_update = '''a = a*exp(syn_noise_active*syn_active*sqrt(syn_sigma*synEE_mod_dt)*randn())
+                      a = syn_active*clip(a, amin, amax)'''
 
 
 synEE_mod = '''            
