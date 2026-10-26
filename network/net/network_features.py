@@ -24,15 +24,13 @@ def synapse_delays(syn_delay: ms, syn_delay_windowsize: ms, Syn: Synapses, shape
     return delays  # in seconds
 
 
-def synapse_dd_delays(dist, src, tar, Syn: Synapses, velocity, rel_sd):
+def synapse_dd_delays(dist, Syn: Synapses, velocity, rel_sd):
     """
         Configure distance-dependent pre-synaptic delays: the delay of each synapse is
         drawn from a normal distribution with mean distance/velocity and a standard
         deviation proportional to the mean (negative values are set to zero).
 
-        :param dist: distance matrix (in metre, without units) between all source (rows)
-                     and target (columns) neurons, as returned by ``generate_dd_connectivity``
-        :param src, tar: source and target indices of the synapses of ``Syn``
+        :param dist: distance (in metre, without units) of each synapse of ``Syn``
 
         Related parameters:
 
@@ -40,7 +38,7 @@ def synapse_dd_delays(dist, src, tar, Syn: Synapses, velocity, rel_sd):
         - :data:`net.standard_params.syn_dd_delay_rel_sd`
     """
     # need to create these for all synapses, not only the initially active ones
-    mean = np.asarray(dist)[src, tar]*metre / velocity
+    mean = np.asarray(dist)*metre / velocity
     delays = np.random.normal(mean/second, rel_sd*mean/second)
     delays[delays < 0] = 0  # ensure there are non-negative values
 

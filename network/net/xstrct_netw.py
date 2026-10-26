@@ -3,8 +3,8 @@ import os, shutil, pickle
 
 from . import models as mod, network_features
 from .brian2objects.binnedactivitymonitor import BinnedActivityMonitor
-from .utils import generate_connections, generate_full_connectivity, \
-                   generate_N_connections, generate_dd_connectivity
+from .utils import generate_connections, generate_N_connections, \
+                   generate_dd_connectivity, pair_distances
 
 import numpy as np
 import pypet
@@ -286,11 +286,10 @@ def run_net(tr):
     SynIE = Synapses(target=GInh, source=GExc, on_pre=static_pre_EE.format(a='a_ie'), namespace=namespace)
     SynII = Synapses(target=GInh, source=GInh, on_pre=static_pre_EI.format(a='a_ii'), namespace=namespace)
 
-    # all possible EE synapses exist, structural plasticity (de)activates them
-    sEE_src, sEE_tar = generate_full_connectivity(tr.N_e, same=True)
-
-    SynEE.connect(i=sEE_src, j=sEE_tar)
-    SynEE.syn_active = 0
+    # all possible EE synapses exist, structural plasticity (de)activates them; they are
+    # created by Brian2 in the order (0,1), (0,2), ..., (1,0), (1,2), ...
+    n_EE = tr.N_e * (tr.N_e - 1)
+    SynEE.connect(condition='i != j')
     SynEE.taupre, SynEE.taupost = tr.taupre, tr.taupost
     SynEE.Aplus = tr.Aplus
     SynEE.Aminus = tr.Aminus
@@ -299,7 +298,7 @@ def run_net(tr):
     sigma_dd_inh = tr.sigma_dd_inh if tr.sigma_dd_inh > 0*um else tr.sigma_dd
 
     if tr.ddcon_active:
-        sEI_src, sEI_tar, _, dist_EI = generate_dd_connectivity(np.array(GExc.x), np.array(GExc.y),
+        sEI_src, sEI_tar = generate_dd_connectivity(np.array(GExc.x), np.array(GExc.y),
                                                         np.array(GInh.x), np.array(GInh.y),
                                                         sigma_dd_inh, tr.grid_size, tr.grid_wrap,
                                                         same=False, sparseness=tr.p_ei)
@@ -313,22 +312,22 @@ def run_net(tr):
     if tr.istdp_active:        
         SynEI.taupre, SynEI.taupost = tr.taupre_EI, tr.taupost_EI
 
-    sIE_src, sIE_tar, _, dist_IE = generate_dd_connectivity(np.array(GInh.x), np.array(GInh.y),
+    if tr.ddcon_active:
+        sIE_src, sIE_tar = generate_dd_connectivity(np.array(GInh.x), np.array(GInh.y),
                                                     np.array(GExc.x), np.array(GExc.y),
                                                     sigma_dd_inh, tr.grid_size, tr.grid_wrap,
-                                                    same=False, sparseness=tr.p_ie) if tr.ddcon_active \
-        else generate_connections(tr.N_i, tr.N_e, tr.p_ie)
-    sII_src, sII_tar, _, dist_II = generate_dd_connectivity(np.array(GInh.x), np.array(GInh.y),
+                                                    same=False, sparseness=tr.p_ie)
+        sII_src, sII_tar = generate_dd_connectivity(np.array(GInh.x), np.array(GInh.y),
                                                     np.array(GInh.x), np.array(GInh.y),
                                                     sigma_dd_inh,  tr.grid_size, tr.grid_wrap,
-                                                    sparseness=tr.p_ii) if tr.ddcon_active \
-        else generate_connections(tr.N_i, tr.N_i, tr.p_ii, same=True)
+                                                    sparseness=tr.p_ii)
+    else:
+        sIE_src, sIE_tar, _, _ = generate_connections(tr.N_i, tr.N_e, tr.p_ie)
+        sII_src, sII_tar, _, _ = generate_connections(tr.N_i, tr.N_i, tr.p_ii, same=True)
 
     SynIE.connect(i=sIE_src, j=sIE_tar)
     SynII.connect(i=sII_src, j=sII_tar)
 
-    tr.f_add_result('sEE_src', sEE_src)
-    tr.f_add_result('sEE_tar', sEE_tar)
     tr.f_add_result('sIE_src', sIE_src)
     tr.f_add_result('sIE_tar', sIE_tar)
     tr.f_add_result('sEI_src', sEI_src)
@@ -371,30 +370,16 @@ def run_net(tr):
 
     # initially active EE synapses
     if tr.ddcon_active:
-        sEE_src_dd, sEE_tar_dd, sEE_p, dist_EE = generate_dd_connectivity(np.array(GExc.x), np.array(GExc.y),
-                                                                  np.array(GExc.x), np.array(GExc.y),
-                                                                  tr.sigma_dd, tr.grid_size, tr.grid_wrap,
-                                                                  sparseness=tr.p_ee)
-        # sEE_p is the full N_e x N_e matrix (incl. the diagonal), pick
-        # the entries of the synapses in SynEE's order
-        SynEE.p_distance = sEE_p[sEE_src, sEE_tar]  # TODO record this in trajectory
-
-        EEactive = np.zeros(shape=(tr.N_e, tr.N_e))
-        EEactive[sEE_src_dd, sEE_tar_dd] = 1
-        np.fill_diagonal(EEactive, np.nan)
-        syn_EE_active_init = EEactive[~np.isnan(EEactive)].flatten()
-        SynEE.syn_active = syn_EE_active_init
-
-        EEa = np.zeros(shape=EEactive.shape)
-        EEa[sEE_src_dd, sEE_tar_dd] = tr.a_ee
-        syn_EE_weights_init = EEa[~np.isnan(EEactive)].flatten()
-        SynEE.a = syn_EE_weights_init
+        syn_EE_active_init, SynEE.p_distance = generate_dd_connectivity(
+            np.array(GExc.x), np.array(GExc.y), np.array(GExc.x), np.array(GExc.y),
+            tr.sigma_dd, tr.grid_size, tr.grid_wrap, sparseness=tr.p_ee, pair_order=True)
     else:
         # make randomly chosen synapses active at beginning
-        rs = np.random.uniform(size=len(sEE_src))
+        rs = np.random.uniform(size=n_EE)
         syn_EE_active_init = (rs < tr.p_ee).astype('int')
-        SynEE.syn_active, SynEE.a = syn_EE_active_init, syn_EE_active_init * tr.a_ee
         SynEE.p_distance = 1
+    SynEE.syn_active = syn_EE_active_init
+    SynEE.a = 'syn_active*a_ee'
 
     # all EI synapses are active
     SynEI.syn_active, SynEI.a = 1, tr.a_ei
@@ -405,18 +390,21 @@ def run_net(tr):
             if not tr.ddcon_active:
                 raise ValueError("syn_dd_delay_active requires ddcon_active")
             dd_delay_args = dict(velocity=tr.syn_dd_delay_velocity, rel_sd=tr.syn_dd_delay_rel_sd)
-            ee_delays = network_features.synapse_dd_delays(dist_EE, sEE_src, sEE_tar, SynEE, **dd_delay_args)
-            ei_delays = network_features.synapse_dd_delays(dist_EI, sEI_src, sEI_tar, SynEI, **dd_delay_args)
-            ii_delays = network_features.synapse_dd_delays(dist_II, sII_src, sII_tar, SynII, **dd_delay_args)
-            ie_delays = network_features.synapse_dd_delays(dist_IE, sIE_src, sIE_tar, SynIE, **dd_delay_args)
+            pos = {'E': (np.array(GExc.x), np.array(GExc.y)), 'I': (np.array(GInh.x), np.array(GInh.y))}
+            def dist(pre, post, src, tar):
+                return pair_distances(*pos[pre], *pos[post], src, tar, float(tr.grid_size/metre), tr.grid_wrap)
+            sEE_src, sEE_tar = np.nonzero(~np.eye(tr.N_e, dtype=bool))
+            ee_delays = network_features.synapse_dd_delays(dist('E', 'E', sEE_src, sEE_tar), SynEE, **dd_delay_args)
+            ei_delays = network_features.synapse_dd_delays(dist('I', 'E', sEI_src, sEI_tar), SynEI, **dd_delay_args)
+            ii_delays = network_features.synapse_dd_delays(dist('I', 'I', sII_src, sII_tar), SynII, **dd_delay_args)
+            ie_delays = network_features.synapse_dd_delays(dist('E', 'I', sIE_src, sIE_tar), SynIE, **dd_delay_args)
         else:
-            shapeEE, shapeEI, shapeII, shapeIE = syn_EE_active_init.shape, len(sEI_src), len(sII_src), len(sIE_src)
+            shapeEE, shapeEI, shapeII, shapeIE = n_EE, len(sEI_src), len(sII_src), len(sIE_src)
             ee_delays = network_features.synapse_delays(tr.synEE_delay, tr.synEE_delay_windowsize, SynEE, shapeEE)
             ei_delays = network_features.synapse_delays(tr.synEI_delay, tr.synEI_delay_windowsize, SynEI, shapeEI)
             ii_delays = network_features.synapse_delays(tr.synII_delay, tr.synII_delay_windowsize, SynII, shapeII)
             ie_delays = network_features.synapse_delays(tr.synIE_delay, tr.synIE_delay_windowsize, SynIE, shapeIE)
 
-        tr.f_add_result("sEE_delays", ee_delays)
         tr.f_add_result("sEI_delays", ei_delays)
         tr.f_add_result("sII_delays", ii_delays)
         tr.f_add_result("sIE_delays", ie_delays)
@@ -528,7 +516,7 @@ def run_net(tr):
                                   model=sum_model, dt=tr.csample_dt,
                                   name='get_active_synapse_count')
         sum_connection.connect()
-        sum_connection.NSyn = len(sEE_src)  # maximum number of EE synapses
+        sum_connection.NSyn = n_EE  # maximum number of EE synapses
 
         # homeostatically adjust growth rate
         # a similar hack as above, but here we update SynEE's insert_P
@@ -653,7 +641,7 @@ def run_net(tr):
 
             SynEE_a_dt = T/tr.synee_a_nrecpoints
         
-    record_range_ee = range(len(sEE_src))
+    record_range_ee = range(n_EE)
 
     SynEE_a = StateMonitor(SynEE, ['a','syn_active'],
                            record=record_range_ee,
