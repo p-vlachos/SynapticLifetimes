@@ -23,5 +23,4 @@ dependencies:
     - matplotlib==3.11.2
     - powerlaw==2.0.0
     - mrestimator==0.2.0
-    - gitpython==3.2.1
     - pytest==9.1.1

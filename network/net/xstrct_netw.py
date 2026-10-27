@@ -35,6 +35,8 @@ def run_net(tr):
 
     set_device('cpp_standalone', directory='./builds/%.4d'%(tr.v_idx),
                build_on_run=False)
+    # compile with 4 processes (several simulations are compiled at the same time)
+    prefs.devices.cpp_standalone.extra_make_args_unix = ['-j4']
 
 
     # set brian 2 and numpy random seeds

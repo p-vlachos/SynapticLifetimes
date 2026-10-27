@@ -1,32 +1,13 @@
 #!/bin/bash
-
-usage() {
-    cat <<EOF
-usage: ./src/post_process.sh [-n N]     (from inside a run folder, e.g. completed/<run>/)
-
-Runs the post-processing (net/post_processing.py: survival and lifetime statistics,
-turnover counts, branching ratio and survival figures) again for all simulations of a
-finished run, with the code of the run (src/).
-
-  -n N    run at most N post-processings in parallel (default: all simulations,
-          at most the number of available cores)
-  -h      show this help
-EOF
-}
-
-NPARSIM=''
-
-while getopts "n:h" opt; do
-    case $opt in
-    n) NPARSIM=$OPTARG ;;
-    h) usage; exit 0 ;;
-    *) usage; exit 1 ;;
-    esac
-done
+# Runs the post-processing (net/post_processing.py) of a finished run again, e.g. after
+# changing the analysis code, with the code of the run (src/). From inside the run folder:
+#
+#   cd completed/<run>
+#   ./src/post_process.sh [-n N]      (-n: at most N at a time)
 
 if [ ! -d src/net ] || [ ! -d builds ]; then
-    echo "error: run this from inside a run folder (with src/ and builds/)" >&2
+    echo "error: run this from inside a run folder (with src/ and builds/)"
     exit 1
 fi
 
-PYTHONPATH="$PWD/src" python -m net.xstrct_run -x -t ${NPARSIM:+-c $NPARSIM}
+PYTHONPATH=src python -m net.run --postprocess "$@"

@@ -3,94 +3,109 @@
 Neural network simulator developed by Felix Hoffmann for his PhD.
 Original at https://github.com/synsrv/src_net.
 
-Network simulation using Brian 2 and Pypet written to analyse the survivability of transient synapses of cortical neurons.
-
-** Requirements
-To run the network simulation a Python 3.12 environment with Brian 2 and Pypet is required.
-The pinned dependencies are listed in ~environment.yml~; the upstream Brian2 release from PyPI is
-used, no patched Brian2 version is needed anymore.
-
-In addition, the following has to be installed on the system:
-- Git
-- a C++ compiler (~g++~), used by Brian2's ~cpp_standalone~ device
-- LaTeX with the ~tgheros~, ~sansmath~ and ~siunitx~ packages, used for the figures
-
-Below is an example installation routine for setting up a conda environment.
-This assumes that you already have anaconda or miniconda installed.
-
-#+BEGIN_SRC sh
-#!/bin/sh
-
-conda env create -f environment.yml
-conda activate synlife
-
-#+END_SRC
+Network simulation using Brian 2 and Pypet written to analyse the survivability of transient
+synapses of cortical neurons.
 
 ** Installation
 
-It is highly recommended to limit the level of parallelization when building the standalone_cpp simulator.
-In ~$HOME/.brian/user_preferences~ write, where ~4~ is the number of CPU cores your PC has:
-#+BEGIN_SRC ini
-[devices.cpp_standalone]
-extra_make_args_unix = ["-j4"]
-#+END_SRC
+Needed on the computer (or the cluster nodes):
+- conda, e.g. Miniforge (can be installed without admin rights, see below)
+- a C++ compiler (~g++~), used to compile the simulation
+- LaTeX with the ~tgheros~, ~sansmath~ and ~siunitx~ packages, used for the figures
+- git
 
-** Run a simulation
-To verify your installation, within ~network/~ run
-
-#+BEGIN_SRC sh
-./run_test.sh tests/net_tests/test_standard_net/
-#+END_SRC
-
-This copies the code to ~tests/testing/<timestamp>_test_standard_net/~ (at the repository root),
-runs the test simulation there and checks its results (~test.log~).
-
-** Explore parameters
-
-The parameters of a run are set in ~net/explored_params.py~ (defaults and documentation in
-~net/standard_params.py~). Each entry of its ~input_dict~ is a list: lists of length n give n
-simulations, matched column by column, and lists of length 1 are used for all of them. The
-variable ~name~ labels the run. Then, within ~network/~:
+Create the Python environment ~synlife~ (Python 3.12, Brian2, pypet, ...; the versions are pinned
+in ~environment.yml~), from the repository root:
 
 #+BEGIN_SRC sh
-./run.sh
+conda env create -f network/environment.yml
+conda activate synlife
 #+END_SRC
 
-runs all parameter sets in parallel (at most one per core) in
-~running/<timestamp>_<name>/~, which is moved to ~completed/~ when finished. The git commit is
-recorded with the results; uncommitted changes of tracked files are saved in
-~uncommitted_changes.diff~ of the run folder. The complete output is printed and saved in
-~run.log~ of the run folder. Options (~./run.sh -h~):
+If conda is not available (e.g. on a cluster), install Miniforge in your home directory first:
 
-| ~-t~       | test run: no git record, results in ~tests/man/~                   |
-| ~-b~       | run in the background (output only in ~run.log~ of the run folder)  |
-| ~-n N~     | at most N simulations in parallel (~4 GB each with N_e=1600)        |
-| ~-P name~  | name of the run folder instead of ~name~                            |
-| ~-D text~  | description, saved in the file ~description~ of the run folder      |
+#+BEGIN_SRC sh
+curl -L -O https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
+bash Miniforge3-Linux-x86_64.sh -b -p $HOME/miniforge3
+source $HOME/miniforge3/bin/activate
+#+END_SRC
 
-To run the post-processing of a finished run again (e.g. after changing the analysis code), use
-~./src/post_process.sh~ from inside its run folder.
+To check the installation, run the standard test (within ~network/~, takes ~2 minutes):
 
-** Run on a Slurm cluster
+#+BEGIN_SRC sh
+./run_test.sh tests/net_tests/test_standard_net
+#+END_SRC
 
-~sbatch submit.slurm~ runs ~run.sh~ on one whole node (all parameter sets in parallel, all memory
-of the node, at most 12 h); options of ~run.sh~ can be added, e.g. ~sbatch submit.slurm -t~. It
-can be submitted from any folder, e.g. a folder ~submitted/~ for the job logs:
-~cd submitted; sbatch ../submit.slurm~. The job log (~synlife_<jobid>.log~ in the submission
-folder) shows the progress and errors; all data and the complete log (~run.log~) are saved in the
-run folder in the repository. Add ~module load~ lines in ~submit.slurm~ if your cluster needs them.
+** Running simulations
 
-The job uses the venv ~network/myenv~ if it exists, otherwise the conda environment ~synlife~
-(of the conda installation in ~$CONDA_BASE~, default ~~/miniforge3~). Without conda, create the
-venv on a login node (needs Python 3.12 and internet access):
-~PYTHON=python3.12 network/setup_env.sh~. The packages are pinned in ~requirements.txt~ (same
-versions as ~environment.yml~).
+1. Set the parameters in ~network/net/explored_params.py~ (defaults and their documentation in
+   ~net/standard_params.py~). Each entry is a list of values: lists of length n give n
+   simulations (simulation k uses the k-th value of each list), lists of length 1 are used for
+   all of them. For example, ~'random_seed': [7910, 13278, 37459]~ gives 3 simulations. The
+   variable ~name~ at the end of the file names the run.
+2. Run, within ~network/~ (with the environment activated):
 
-** Run tests
+   #+BEGIN_SRC sh
+   ./run.sh
+   #+END_SRC
 
-There are multiple sets of tests currently, they fall in three broad categories:
-1. tests that can be run with ~pytest~: ~pytest tests/pytests~
-2. unit tests of the analysis methods, run from within ~analysis/~: ~PYTHONPATH=. pytest test~
-3. all other tests, which can be run using ~./run_test.sh~ as shown above
+   All simulations run in parallel (at most one per core). Options: ~-n N~ runs at most N at a
+   time (each needs ~4 GB of memory with N_e=1600), ~-b~ runs in the background.
+3. The run is done in ~running/<timestamp>_<name>/~ (at the repository root) and moved to
+   ~completed/<timestamp>_<name>/~ when it has finished. If a simulation fails, the run stays in
+   ~running/~ with its error in ~failed_run_<k>.txt~.
 
+A run folder contains (simulation k = 0000, 0001, ...):
 
+| ~run.log~                  | the complete output                                               |
+| ~figures/<figure>/<k>.png~ | figures of each simulation                                        |
+| ~builds/<k>/raw/~          | raw data of each simulation (spikes, turnover, weights, parameters) |
+| ~data/<name>.hdf5~         | pypet trajectory with all parameters and the connectivity         |
+| ~src/~                     | the code that was run                                             |
+| ~git_commit.txt~           | the git commit of the code                                        |
+| ~uncommitted_changes.diff~ | changes of the code not committed to git (if any)                 |
+
+A full simulation with the default parameters (N_e=1600, T2=5000 s, T5=1500 s) takes about
+3-3.5 h.
+
+** Running on a Slurm cluster
+
+The job script ~submit.slurm~ (repository root) runs ~run.sh~ on one whole node, so that all
+simulations run in parallel. Create a folder for the job logs in the repository, e.g.
+~submitted/~, and submit from there:
+
+#+BEGIN_SRC sh
+cd SynapticLifetimes
+mkdir -p submitted && cd submitted
+sbatch ../submit.slurm
+#+END_SRC
+
+- ~squeue -u $USER~ shows the job, ~tail -f synlife_<jobid>.log~ its progress and errors.
+- The results are saved in ~completed/<timestamp>_<name>/~ as for local runs.
+- Options of ~run.sh~ can be added: ~sbatch ../submit.slurm -n 4~.
+- At the top of ~submit.slurm~: the partition (~general1,general2~ on Goethe) and the time
+  limit (12 h). It activates the conda environment of ~$HOME/miniforge3~; change that line if
+  conda is installed elsewhere, and add ~module load~ lines if the cluster needs them for ~g++~
+  or LaTeX.
+
+** Analysing results
+
+The figures are made at the end of each simulation. Further analysis scripts in ~analysis/~ can be
+run on a finished run with its own code, e.g.:
+
+#+BEGIN_SRC sh
+cd completed/<run>
+PYTHONPATH=src python -m analysis.t5_peaks
+#+END_SRC
+
+Weight snapshots (~builds/<k>/raw/synee_a.p~, ...) are read with ~analysis.utils.WeightSnapshots~.
+To run the post-processing (survival and turnover statistics, their figures) of a finished run
+again, e.g. after changing the analysis code: ~./src/post_process.sh~ inside the run folder.
+
+** Tests
+
+Within ~network/~:
+1. network tests (a short simulation and checks of its results):
+   ~./run_test.sh tests/net_tests/<test>~ (run folder in ~tests/testing/~)
+2. tests with ~pytest~: ~pytest tests/pytests~
+3. unit tests of the analysis, from within ~analysis/~: ~PYTHONPATH=. pytest test~

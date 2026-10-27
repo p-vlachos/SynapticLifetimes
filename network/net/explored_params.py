@@ -1,3 +1,8 @@
+"""
+Parameters of a run (./run.sh). Each entry of input_dict is a list of values: lists of length n
+give n simulations (simulation k uses the k-th value of each list), lists of length 1 are used
+for all simulations. Parameters not listed here have the values of standard_params.py.
+"""
 from brian2.units import ms, mV, second, ksecond, Hz, um
 from .param_tools import *
 import numpy as np
@@ -154,7 +159,7 @@ input_dict = {'T1': [10 * second],
 }
 
 
-name = 'hdf5_data'
+name = 'hdf5_data'      # name of the run: run folder <timestamp>_<name>, data/<name>.hdf5
 explore_dict = n_list(input_dict)
 
 if __name__ == "__main__":

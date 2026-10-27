@@ -2,73 +2,62 @@
 
 usage() {
     cat <<EOF
-usage: ./run.sh [-t] [-b] [-n N] [-P name] [-D description]
+usage: ./run.sh [-n N] [-b]
 
-Runs all parameter sets of net/explored_params.py, in a copy of the code in
-../running/<timestamp>_<name>/, which is moved to ../completed/ when finished.
-The git commit is recorded with the results; uncommitted changes of tracked
-files are saved in uncommitted_changes.diff of the run folder. The complete
-output is printed and saved in run.log of the run folder.
+Runs all parameter sets of net/explored_params.py, several in parallel.
 
-  -t          test run: no git record, results go to ../tests/man/
-  -b          run in the background (output only in run.log of the run folder)
-  -n N        run at most N simulations in parallel (default: all parameter
-              sets, at most the number of available cores; each simulation
-              needs ~4 GB of memory with N_e=1600)
-  -P name     name of the run folder (default: name in net/explored_params.py)
-  -D text     description, saved in the file 'description' of the run folder
-  -h          show this help
+The code is copied to ../running/<timestamp>_<name>/ (name: set in explored_params.py)
+and the simulations run there. When they have finished, the folder is moved to
+../completed/. The output is shown and saved in run.log of that folder, together with
+the git commit (git_commit.txt) and any uncommitted changes (uncommitted_changes.diff).
+
+  -n N   run at most N simulations at a time (default: all, at most one per core;
+         each simulation needs ~4 GB of memory with N_e=1600)
+  -b     run in the background (output only in run.log)
 EOF
 }
 
-MODE='run'
+NPARSIM=""
 BACKGROUND=false
-NPARSIM=''
-NAME=''
-DESCRIPTION=''
-
-while getopts "tbn:P:D:h" opt; do
+while getopts "n:bh" opt; do
     case $opt in
-    t) MODE='test' ;;
-    b) BACKGROUND=true ;;
     n) NPARSIM=$OPTARG ;;
-    P) NAME=$OPTARG ;;
-    D) DESCRIPTION=$OPTARG ;;
-    h) usage; exit 0 ;;
+    b) BACKGROUND=true ;;
     *) usage; exit 1 ;;
     esac
 done
 
-CODEDIR=$(pwd)
+# run folder: timestamp + name from explored_params.py
+NAME=$(PYTHONPATH=. python -c "from net.explored_params import name; print(name)") || exit 1
+RUN=$(date +%y%m%d_%H%M%S)_$NAME
+mkdir -p ../running/$RUN
 
-if [ -z "$NAME" ]; then
-    NAME=$(PYTHONPATH="$CODEDIR" python -c "from net.explored_params import name; print(name)") || exit 1
-fi
+# copy the code and record its git state
+rsync -a --exclude='__pycache__' --exclude='*~' ./ ../running/$RUN/src/
+git log -1 --format="%H %s" > ../running/$RUN/git_commit.txt 2>/dev/null
+git diff HEAD > ../running/$RUN/uncommitted_changes.diff 2>/dev/null
+for f in git_commit.txt uncommitted_changes.diff; do
+    [ -s ../running/$RUN/$f ] || rm ../running/$RUN/$f    # remove if empty
+done
 
-# run folder: timestamp + name
-RUNNAME=$(date +"%y%m%d_%H%M%S")_$NAME
+cd ../running/$RUN
+echo "Run folder: running/$RUN"
 
-mkdir -p ../running/$RUNNAME
-rsync -a --exclude='*~' --exclude='__pycache__' --exclude='myenv/' \
-      $CODEDIR/ ../running/$RUNNAME/src/
+run() {
+    [ -n "$SLURM_JOB_ID" ] && echo "Slurm job $SLURM_JOB_ID on $(hostname)"
+    if ! PYTHONPATH=src PYTHONUNBUFFERED=1 python -m net.run ${NPARSIM:+-n $NPARSIM}; then
+        echo "Failed: the run folder stays in running/$RUN"
+        return 1
+    fi
+    mkdir -p ../../completed
+    mv ../$RUN ../../completed/
+    echo "Done: completed/$RUN"
+}
 
-cd ../running/$RUNNAME
-
-if [ -n "$DESCRIPTION" ]; then
-    echo "$DESCRIPTION" > ./description
-fi
-
-echo "Run folder: running/$RUNNAME"
-if [ -n "$SLURM_JOB_ID" ]; then
-    echo "Slurm job $SLURM_JOB_ID on $(hostname)" > run.log
-fi
-
-# the complete output is saved in run.log of the run folder (moved with it)
-if $BACKGROUND
-then
-    nohup ./src/run_local.sh $RUNNAME $MODE "$NPARSIM" >> run.log 2>&1 &
-    echo "Running in the background, output in running/$RUNNAME/run.log"
+if $BACKGROUND; then
+    run > run.log 2>&1 &
+    echo "Running in the background, output in running/$RUN/run.log"
 else
-    ./src/run_local.sh $RUNNAME $MODE "$NPARSIM" 2>&1 | tee -a run.log
+    run 2>&1 | tee run.log
     exit ${PIPESTATUS[0]}
 fi
