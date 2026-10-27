@@ -7,9 +7,10 @@ DEBUG=false
 CLUSTER='x-men'
 TESTRUN='net-test'
 
-while getopts "l" opt; do
+while getopts "ld" opt; do
     case $opt in
     l) LOCAL_COMPUTE=true ;;
+    d) DEBUG=true ;;    # run in the foreground (e.g. inside a Slurm batch job)
     \?) echo "error: option -$OPTARG is not implemented"; exit ;;
     esac
 done
@@ -35,7 +36,7 @@ then
     echo "Note: analysis-dev/ directory found." 
     echo "Replacing analysis/ with analysis-dev/ in output folder."
 
-    rsync -a --exclude='*~' --exclude='analysis/' \
+    rsync -a --exclude='*~' --exclude='myenv/' --exclude='analysis/' \
 	  $CODEDIR/ ../tests/testing/$WDIR/src/
 
     rsync -a --delete --exclude='*~' --exclude='__pycache__' \
@@ -45,7 +46,7 @@ else
     echo "Note: analysis-dev/ directory not found." 
     echo "Proceeding without replacment."
 
-    rsync -a --exclude='*~' \
+    rsync -a --exclude='*~' --exclude='myenv/' \
 	  $CODEDIR/ ../tests/testing/$WDIR/src/
 fi
 
@@ -71,9 +72,16 @@ cp "./src/"$TESTDIR_FULL"explored_params.py" ./src/net/
 
 rm -f nohup.out
 
-nohup ./src/run_local.sh $WDIR $CODEDIR $NPARSIM \
-                          $NCORES $MEMGB $LOCAL_COMPUTE \
-                          $CLUSTER $TESTRUN $TESTDIR_FULL &
+if $DEBUG
+then
+    ./src/run_local.sh $WDIR $CODEDIR $NPARSIM \
+                       $NCORES $MEMGB $LOCAL_COMPUTE \
+                       $CLUSTER $TESTRUN $TESTDIR_FULL
+else
+    nohup ./src/run_local.sh $WDIR $CODEDIR $NPARSIM \
+                              $NCORES $MEMGB $LOCAL_COMPUTE \
+                              $CLUSTER $TESTRUN $TESTDIR_FULL &
+fi
 
 
 

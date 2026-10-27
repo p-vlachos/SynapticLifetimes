@@ -56,6 +56,23 @@ This will create ~running/~ and ~completed/~ directories on the same level as ~s
 
 Runs started with ~-E~ record the git commit and refuse to start if there are uncommitted changes, so commit your ~explored_params.py~ first.
 
+** Run on a Slurm cluster
+
+There are two ways:
+
+1. Interactively from a login node: without ~-l~, ~run.sh~ and ~run_test.sh~ start the simulation
+   with ~srun~ (partition ~x-men~, or ~sleuths~ with ~-s~; change ~CLUSTER~ in ~run.sh~ for other
+   clusters). Give the memory with a unit, e.g. ~./run.sh -n 2 -c 2 -m 8G -P _myrun -E~.
+2. As a batch job with ~sbatch submit.slurm~ (from the repository root). The job runs
+   ~run_test.sh~ or ~run.sh~ with ~-l -d~, i.e. inside the job and in the foreground; see the
+   comments in ~submit.slurm~ for how to run your own parameters and what to request.
+
+Without conda, create the environment as a venv on a login node (needs Python 3.12 and
+internet access): ~PYTHON=python3.12 network/setup_env.sh~, then ~source network/myenv/bin/activate~.
+The packages are pinned in ~requirements.txt~ (same versions as ~environment.yml~).
+Also limit the parallel compilation (~~/.brian/user_preferences~, see Installation) to the number
+of cores you request.
+
 ** Run tests
 
 There are multiple sets of tests currently, they fall in three broad categories:

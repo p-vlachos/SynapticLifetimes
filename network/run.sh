@@ -2,7 +2,7 @@
 
 NPARSIM=1
 NCORES=1
-MEMGB=2
+MEMGB=4G
 LOCAL_COMPUTE=false
 POSTFIX=""
 TESTRUN='manual'
@@ -17,7 +17,7 @@ while getopts "hln:c:m:P:Eds" opt; do
     l) LOCAL_COMPUTE=true ;;    # run it locally (if false put on cluster)
     n) NPARSIM=$OPTARG ;;   # number of sims to run in paralel (set equal to c)
     c) NCORES=$OPTARG ;;    # cpus to reserve
-    m) MEMGB=$OPTARG ;; # memory to reserve in total (5-7 Gb per sim)
+    m) MEMGB=$OPTARG ;; # memory to reserve in total, with unit (e.g. 8G; ~4G per sim with N_e=1600)
     E) TESTRUN="false" ;;
     d) DEBUG=true ;;    # Do not go in background but run in terminal
     s) CLUSTER='sleuths' ;; # cluster name
@@ -58,7 +58,7 @@ then
     echo "Note: analysis-dev/ directory found." 
     echo "Replacing analysis/ with analysis-dev/ in output folder."
 
-    rsync -a --exclude='*~' --exclude='analysis/' \
+    rsync -a --exclude='*~' --exclude='myenv/' --exclude='analysis/' \
 	  $CODEDIR/ ../running/$TIMESTAMP/src/
 
     rsync -a --delete --exclude='*~' --exclude='__pycache__' \
@@ -68,7 +68,7 @@ else
     echo "Note: analysis-dev/ directory not found." 
     echo "Proceeding without replacment."
 
-    rsync -a --exclude='*~' \
+    rsync -a --exclude='*~' --exclude='myenv/' \
 	  $CODEDIR/ ../running/$TIMESTAMP/src/
 fi
 
