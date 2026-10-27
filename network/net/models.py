@@ -15,6 +15,32 @@ neuron_poisson = '''
               Vt : volt
               '''
 
+# variables of excitatory neurons for the growth homeostasis: number of active input EE synapses
+# and sum of p_distance of the inactive ones
+neuron_exc_growth = '''
+              n_active_in : 1
+              pinactive_in : 1
+              '''
+
+# Gaussian distance factor of the insertion probability of EE synapses (the same function as
+# utils.gaussian), computed from the positions of the two neurons on the (wrapped) sheet
+p_distance_wrap = '''
+            dist_x = abs(x_pre - x_post) : metre
+            dist_y = abs(y_pre - y_post) : metre
+            dist_wrapped = sqrt(((grid_size - dist_x)*int(dist_x > 0.5*grid_size) + dist_x*int(dist_x <= 0.5*grid_size))**2 + ((grid_size - dist_y)*int(dist_y > 0.5*grid_size) + dist_y*int(dist_y <= 0.5*grid_size))**2) : metre
+            p_distance = 2/sqrt(2*pi*(sigma_dd/um)**2) * exp(-(dist_wrapped/um)**2/(2*(sigma_dd/um)**2)) : 1
+            '''
+p_distance_nowrap = '''
+            p_distance = 2/sqrt(2*pi*(sigma_dd/um)**2) * exp(-(sqrt((x_pre - x_post)**2 + (y_pre - y_post)**2)/um)**2/(2*(sigma_dd/um)**2)) : 1
+            '''
+p_distance_uniform = 'p_distance = 1 : 1'
+
+# summed per postsynaptic neuron, for the growth homeostasis
+synEE_growth_mod = '''
+            n_active_in_post = 1.0*syn_active : 1 (summed)
+            pinactive_in_post = p_distance*(1 - syn_active) : 1 (summed)
+            '''
+
 # variables of excitatory neurons for the normalization of their input weights
 neuron_exc_normalization = '''
               AsumEE : 1
@@ -88,7 +114,6 @@ synEE_mod = '''
             stdp_rec_start : second (shared)
             stdp_rec_max   : second (shared)
             
-            p_distance : 1
 
             amin : 1 (shared)
             amax : 1 (shared)

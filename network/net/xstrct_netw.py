@@ -94,6 +94,8 @@ def run_net(tr):
     # excitatory neurons additionally carry the variables of the plasticity
     # mechanisms acting on their input synapses
     neuron_model_exc = f"{neuron_model}\n{tr.neuron_exc_normalization}"
+    if tr.adjust_insertP:
+        neuron_model_exc += f"\n{tr.neuron_exc_growth}"
     neuron_reset_exc = tr.neuron_reset_exc
     if tr.scl_active:
         neuron_model_exc += f"\n{tr.condlif_rate_sensor}"
@@ -240,6 +242,14 @@ def run_net(tr):
         synEE_post_mod = '''%s 
                             %s''' %(synEE_post_mod, mod.synEE_post_rec)
 
+    # distance factor of the insertion probability, computed from the neuron positions
+    if tr.ddcon_active:
+        synEE_mod += f"\n{tr.p_distance_wrap if tr.grid_wrap else tr.p_distance_nowrap}"
+    else:
+        synEE_mod += f"\n{tr.p_distance_uniform}"
+    if tr.adjust_insertP:
+        synEE_mod += f"\n{tr.synEE_growth_mod}"
+
     # E<-E advanced synapse model
     SynEE = Synapses(target=GExc, source=GExc, model=synEE_mod,
                      on_pre=synEE_pre_mod, on_post=synEE_post_mod,
@@ -370,14 +380,13 @@ def run_net(tr):
 
     # initially active EE synapses
     if tr.ddcon_active:
-        syn_EE_active_init, SynEE.p_distance = generate_dd_connectivity(
+        syn_EE_active_init, _ = generate_dd_connectivity(
             np.array(GExc.x), np.array(GExc.y), np.array(GExc.x), np.array(GExc.y),
             tr.sigma_dd, tr.grid_size, tr.grid_wrap, sparseness=tr.p_ee, pair_order=True)
     else:
         # make randomly chosen synapses active at beginning
         rs = np.random.uniform(size=n_EE)
         syn_EE_active_init = (rs < tr.p_ee).astype('int')
-        SynEE.p_distance = 1
     SynEE.syn_active = syn_EE_active_init
     SynEE.a = 'syn_active*a_ee'
 
@@ -420,15 +429,7 @@ def run_net(tr):
   
        
     # synaptic scaling (normalization of the input weights)
-    def set_summed_variable_clock(syn, varname, dt):
-        # Brian2 updates summed variables on the clock of the target group (here every
-        # time step for 2.5M synapses); it is only needed at the normalization interval.
-        # Brian2 has no public interface for this, so the (private) clock is replaced.
-        updater = syn.summed_updaters.get(varname)
-        if updater is None or not hasattr(updater, '_clock'):
-            raise RuntimeError(f"Cannot set the clock of the summed variable {varname}; "
-                               "the Brian2 internals have changed")
-        updater._clock = Clock(dt=dt)
+    set_summed_variable_clock = network_features.set_summed_variable_clock
 
     if tr.netw.config.scl_active:
 
@@ -500,23 +501,20 @@ def run_net(tr):
 
     if tr.adjust_insertP:
 
-        # keep track of the number of active synapses
-        # this is more of a hack, where we have one neuron which
-        # calculate the ratio of active synapses c of the total count NSyn
+        # number of active EE synapses and summed p_distance of the inactive ones: each
+        # excitatory neuron sums them for its input synapses (updated every csample_dt, before
+        # the total below), sum_target adds them up
+        for varname in ['n_active_in_post', 'pinactive_in_post']:
+            network_features.set_summed_variable_clock(SynEE, varname, tr.csample_dt, order=-2)
         sum_target = NeuronGroup(1, '''
-            c : 1 (shared)
+            n_active : 1 (shared)
             pinactive : 1 (shared)
         ''', dt=tr.csample_dt)
-
-        sum_model = '''NSyn : 1 (constant)
-                       c_post = (1.0*syn_active_pre)/NSyn : 1 (summed)
-                       pinactive_post = p_distance_pre*int(syn_active_pre == 0) : 1 (summed)
-                    '''
-        sum_connection = Synapses(target=sum_target, source=SynEE,
-                                  model=sum_model, dt=tr.csample_dt,
-                                  name='get_active_synapse_count')
+        sum_connection = Synapses(source=GExc, target=sum_target, model='''
+                                      n_active_post = n_active_in_pre : 1 (summed)
+                                      pinactive_post = pinactive_in_pre : 1 (summed)
+                                  ''', name='get_active_synapse_count')
         sum_connection.connect()
-        sum_connection.NSyn = n_EE  # maximum number of EE synapses
 
         # homeostatically adjust growth rate
         # a similar hack as above, but here we update SynEE's insert_P
@@ -530,12 +528,12 @@ def run_net(tr):
         """, namespace=namespace)
         if tr.adjust_insertP_mode == "adjust_rate":
             # multiplicative adjustment towards an active fraction of p_ee
-            update_insP = growth_updater.run_regularly('insert_P_post *= p_ee/c_pre',
+            update_insP = growth_updater.run_regularly('insert_P_post *= p_ee*synapse_max_count/n_active_pre',
                                          when='after_groups', dt=tr.csample_dt,
                                          name='update_insP')
         elif tr.adjust_insertP_mode == "constant_count":
             update_insP = growth_updater.run_regularly('''
-                synapse_current_count = int(c_pre*synapse_max_count)
+                synapse_current_count = n_active_pre
                 synapse_needed_count = synapse_target_count - synapse_current_count
                 synapse_inactive_count = synapse_max_count - synapse_current_count
                 insert_P_post = (1/pinactive_pre)*synapse_needed_count

@@ -3,6 +3,23 @@ from brian2.units import *
 import numpy as np
 
 
+def set_summed_variable_clock(syn, varname, dt, order=None):
+    """
+        Brian2 updates summed variables on the clock of the target group (for the synapses onto
+        excitatory neurons: every time step, for millions of synapses), while some are only needed
+        at longer intervals. Brian2 has no public interface for this, so the (private) clock of
+        the updater is replaced. Optionally also set the order within the time step.
+    """
+    from brian2 import Clock
+    updater = syn.summed_updaters.get(varname)
+    if updater is None or not hasattr(updater, '_clock'):
+        raise RuntimeError(f"Cannot set the clock of the summed variable {varname}; "
+                           "the Brian2 internals have changed")
+    updater._clock = Clock(dt=dt)
+    if order is not None:
+        updater.order = order
+
+
 def synapse_delays(syn_delay: ms, syn_delay_windowsize: ms, Syn: Synapses, shape):
     """
         Configure pre-synaptic delays. Similar to Brunel 2000 these are uniformly distributed.
