@@ -82,6 +82,21 @@ def record_turnover(t, was_active_before, should_become_active,
 
 
 
+# weight snapshots: the weights of all active synapses at time t are written
+# to the binary file of the recording rec_id (see output_files.cpp)
+#
+#
+@implementation('cpp', headers=['"output_files.h"'], code=r'''
+    double record_weights(int rec_id, double t, int i, int j, double a, int syn_active) {
+      write_weight_record(rec_id, t, i, j, a, syn_active);
+      return 0.0; // we need to return a dummy value
+    } ''')
+
+@check_units(rec_id=1, t=second, i=1, j=1, a=1, syn_active=1, result=1)
+def record_weights(rec_id, t, i, j, a, syn_active):
+    return 0.0
+
+
 # record spk
 #
 #

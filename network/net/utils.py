@@ -1,6 +1,49 @@
 
+import os
 import numpy as np
-from brian2.units import um, meter
+from brian2.units import um, meter, second
+
+
+# record of the binary weight snapshot files written by output_files.cpp
+WEIGHT_RECORD = np.dtype([('i', '<i4'), ('j', '<i4'), ('a', '<f8')])
+
+
+def read_weight_snapshots(fname, syn, final_t=None, all_pairs=False):
+    """
+        Reads (and deletes) a binary weight snapshot file written by cpp_methods.record_weights:
+        for each snapshot a header record (-1, -1, t), followed by one record (i, j, a) per
+        active synapse, in the order of the synapses. If final_t is given, the current weights
+        of the active synapses of syn are added as a last snapshot at time final_t.
+
+        :param all_pairs: True if syn contains all pairs i != j (in the order of
+                          connect(condition='i != j')), otherwise the pre- and postsynaptic
+                          neurons of all synapses are stored
+        :return: dict with the snapshot times 't' and the 'i', 'j', 'a' of the active synapses of
+                 all snapshots concatenated, snapshot k being [start[k], start[k+1]); read with
+                 analysis.utils.WeightSnapshots
+    """
+    records = np.empty(0, dtype=WEIGHT_RECORD)
+    if os.path.exists(fname):
+        records = np.fromfile(fname, dtype=WEIGHT_RECORD)
+        os.remove(fname)
+    is_header = records['i'] == -1
+    t = records['a'][is_header]
+    # number of synapse records before each header
+    start = np.flatnonzero(is_header) - np.arange(len(t))
+    records = records[~is_header]
+    i, j, a = records['i'], records['j'], records['a']
+
+    if final_t is not None:
+        active = np.flatnonzero(syn.syn_active[:] == 1)
+        t = np.append(t, float(final_t / second))
+        start = np.append(start, len(a))
+        i = np.concatenate([i, syn.i[:][active]])
+        j = np.concatenate([j, syn.j[:][active]])
+        a = np.concatenate([a, syn.a[:][active]])
+
+    return {'t': t * second, 'start': np.append(start, len(a)), 'i': i, 'j': j, 'a': a,
+            'n_pairs': len(syn), 'N_pre': syn.source.N, 'N_post': syn.target.N,
+            'pairs': None if all_pairs else (np.array(syn.i[:]), np.array(syn.j[:]))}
 
 
 def generate_connections(N_tar, N_src, p, same=False):

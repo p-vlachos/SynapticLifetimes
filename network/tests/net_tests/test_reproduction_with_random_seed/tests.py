@@ -156,15 +156,14 @@ class Test_same_seed_produces_same_results(unittest.TestCase):
         with open(self.bpath_2+'/raw/synee_a.p', 'rb') as pfile:
             synee_a_2=pickle.load(pfile)
 
-        np.testing.assert_equal(synee_a_0['t'], synee_a_1['t'])
-        np.testing.assert_equal(synee_a_0['a'], synee_a_1['a'])
-        np.testing.assert_equal(synee_a_0['syn_active'],
-                                synee_a_1['syn_active'])
+        for key in ['t', 'start', 'i', 'j', 'a']:
+            np.testing.assert_equal(synee_a_0[key], synee_a_1[key])
         
         self.assertFalse(np.array_equal(synee_a_1['a'],
                                         synee_a_2['a']))     
-        self.assertFalse(np.array_equal(synee_a_1['syn_active'],
-                                        synee_a_2['syn_active']))        
+        # different active synapses
+        self.assertFalse(np.array_equal(synee_a_1['i'], synee_a_2['i']) and
+                         np.array_equal(synee_a_1['j'], synee_a_2['j']))
 
         
     def test_EI_weights_as_expected(self):
@@ -178,15 +177,11 @@ class Test_same_seed_produces_same_results(unittest.TestCase):
         with open(self.bpath_2+'/raw/synei_a.p', 'rb') as pfile:
             synei_a_2=pickle.load(pfile)
 
-        np.testing.assert_equal(synei_a_0['t'], synei_a_1['t'])
-        np.testing.assert_equal(synei_a_0['a'], synei_a_1['a'])
-        np.testing.assert_equal(synei_a_0['syn_active'],
-                                synei_a_1['syn_active'])
+        for key in ['t', 'start', 'i', 'j', 'a']:
+            np.testing.assert_equal(synei_a_0[key], synei_a_1[key])
         
         self.assertFalse(np.array_equal(synei_a_1['a'],
                                         synei_a_2['a']))     
-        # self.assertFalse(np.array_equal(synei_a_1['syn_active'],
-        #                                 synei_a_2['syn_active']))        
     
 
     def test_EE_turnover_as_expected(self):

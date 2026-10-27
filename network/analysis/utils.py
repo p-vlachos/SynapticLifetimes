@@ -39,6 +39,75 @@ def convert_to_EI_adjacency_matrix(syn_array, N_E, N_I):
 
         
 
+class WeightSnapshots:
+    '''
+    Weight snapshots of the active synapses, as recorded by the network
+    (raw/synee_a.p, synei_a.p, syneedynrec.p, syneidynrec.p; see
+    net.utils.read_weight_snapshots). Only active synapses are stored,
+    inactive synapses have weight 0.
+    '''
+
+    def __init__(self, fname):
+        import pickle
+        with open(fname, 'rb') as pfile:
+            data = pickle.load(pfile)
+        self.t = data['t']
+        self.n_pairs, self.N_pre, self.N_post = data['n_pairs'], data['N_pre'], data['N_post']
+        self._start, self._i, self._j, self._a = data['start'], data['i'], data['j'], data['a']
+        self._pairs = data['pairs']
+
+    def __len__(self):
+        return len(self.t)
+
+    def active(self, k):
+        '''
+        presynaptic neurons i, postsynaptic neurons j and weights a of the
+        synapses active at snapshot k (in the order of the synapses)
+        '''
+        k = range(len(self))[k]
+        s = slice(self._start[k], self._start[k+1])
+        return self._i[s], self._j[s], self._a[s]
+
+    def n_active(self):
+        ''' number of active synapses at each snapshot '''
+        return np.diff(self._start)
+
+    def synapse_index(self, i, j):
+        ''' index of the synapses (i, j) within the synapse group '''
+        if self._pairs is None:
+            # all pairs i != j, ordered by i, then j
+            return i*(self.N_post-1) + j - (j > i)
+        key = self._pairs[0].astype(np.int64)*self.N_post + self._pairs[1]
+        order = np.argsort(key)
+        return order[np.searchsorted(key[order], np.asarray(i, dtype=np.int64)*self.N_post + j)]
+
+    def dense(self, k):
+        ''' weights and activity (0/1) of all synapses at snapshot k '''
+        i, j, a_active = self.active(k)
+        idx = self.synapse_index(i, j)
+        a, syn_active = np.zeros(self.n_pairs), np.zeros(self.n_pairs, dtype=int)
+        a[idx], syn_active[idx] = a_active, 1
+        return a, syn_active
+
+    def weight_changes(self, k0, k1):
+        '''
+        weights at snapshot k0 and their changes until snapshot k1, of the
+        synapses active at k0 or k1 (sorted by i, then j); a synapse that was
+        inactive at one of the snapshots has weight 0 there, and synapses
+        with weight 0 and change 0 are omitted
+        '''
+        (i0, j0, a0), (i1, j1, a1) = self.active(k0), self.active(k1)
+        key0 = i0.astype(np.int64)*self.N_post + j0
+        key1 = i1.astype(np.int64)*self.N_post + j1
+        keys = np.union1d(key0, key1)
+        w0, w1 = np.zeros(len(keys)), np.zeros(len(keys))
+        w0[np.searchsorted(keys, key0)] = a0
+        w1[np.searchsorted(keys, key1)] = a1
+        dw = w1 - w0
+        idx = np.logical_or(w0 != 0, dw != 0)
+        return w0[idx], dw[idx]
+
+
 def topright_axis_off(ax):
 
     ax.spines['right'].set_visible(False)

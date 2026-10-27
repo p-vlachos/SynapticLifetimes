@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from tests.lib.testcaserunsim import TestCaseRunSim
+from analysis.utils import WeightSnapshots
 
 import explored_params
 
@@ -19,8 +20,8 @@ class Test_weight_matrix_equals_initial(TestCaseRunSim):
 
     @classmethod
     def setUpClassAfterSim(cls)-> None:
-        with open('builds/0000/raw/synee_a.p', 'rb') as pfile:
-            cls.synee_a = pickle.load(pfile)
+        snapshots = WeightSnapshots('builds/0000/raw/synee_a.p')
+        cls.synee_a = {'a': np.array([snapshots.dense(k)[0] for k in range(len(snapshots))])}
 
     def test_min_weight_equals_zero(self):
         self.assertEqual(np.min(self.synee_a['a']),0.)

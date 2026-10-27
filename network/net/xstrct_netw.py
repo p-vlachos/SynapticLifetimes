@@ -4,7 +4,7 @@ import os, shutil, pickle
 from . import models as mod, network_features
 from .brian2objects.binnedactivitymonitor import BinnedActivityMonitor
 from .utils import generate_connections, generate_N_connections, \
-                   generate_dd_connectivity
+                   generate_dd_connectivity, read_weight_snapshots
 
 import numpy as np
 import pypet
@@ -19,7 +19,7 @@ from brian2 import NeuronGroup, StateMonitor, SpikeMonitor, \
 from .run_routines import run_phase, run_T2_syndynrec
 
 from .cpp_methods import syn_scale, syn_EI_scale, \
-                         record_turnover, record_spk, record_spk_EI
+                         record_turnover, record_spk, record_spk_EI, record_weights
 
 def run_net(tr):
 
@@ -628,14 +628,12 @@ def run_net(tr):
 
             SynEE_a_dt = T/tr.synee_a_nrecpoints
         
-    record_range_ee = range(n_EE)
+    # weight snapshots of the active synapses, written to binary files
+    # (rec_id, see output_files.cpp) by cpp_methods.record_weights
+    record_weights_code = 'dummy = record_weights({rec_id}, t, i, j, a, syn_active)'
 
-    SynEE_a = StateMonitor(SynEE, ['a','syn_active'],
-                           record=record_range_ee,
-                           dt=SynEE_a_dt,
-                           when='end', order=100)
-
-    record_range = range(len(sEI_src))
+    SynEE.run_regularly(record_weights_code.format(rec_id=0), dt=SynEE_a_dt,
+                        when='end', order=100, name='SynEE_a')
 
     if tr.synei_a_nrecpoints>0 and tr.sim.T2>0*second:
         SynEI_a_dt = tr.sim.T2/tr.synei_a_nrecpoints
@@ -648,38 +646,27 @@ def run_net(tr):
 
             SynEI_a_dt = T/tr.synei_a_nrecpoints
   
-        SynEI_a = StateMonitor(SynEI, ['a','syn_active'],
-                               record=record_range,
-                               dt=SynEI_a_dt,
-                               when='end', order=100)
-
-        netw_objects.append(SynEI_a)
+        SynEI.run_regularly(record_weights_code.format(rec_id=1), dt=SynEI_a_dt,
+                            when='end', order=100, name='SynEI_a')
 
 
     netw_objects.extend([GExc_stat, GInh_stat,
-                         SynEE_stat, SynEE_a, 
+                         SynEE_stat,
                          GExc_spks, GInh_spks])
 
-    if (tr.synEEdynrec and
-        (2*tr.syndynrec_npts*tr.syndynrec_dt < tr.sim.T2) ):
-        SynEE_dynrec = StateMonitor(SynEE, ['a'],
-                                    record=record_range_ee,
-                                    dt=tr.syndynrec_dt,
-                                    name='SynEE_dynrec',
-                                    when='end', order=100)
+    # weight dynamics at the beginning and the end of T2 (see run_T2_syndynrec)
+    want_syndynrec = 2*tr.syndynrec_npts*tr.syndynrec_dt < tr.sim.T2
+    if tr.synEEdynrec and want_syndynrec:
+        SynEE_dynrec = SynEE.run_regularly(record_weights_code.format(rec_id=2),
+                                           dt=tr.syndynrec_dt, when='end', order=100,
+                                           name='SynEE_dynrec')
         SynEE_dynrec.active=False
-        netw_objects.extend([SynEE_dynrec])
 
-            
-    if (tr.synEIdynrec and
-        (2*tr.syndynrec_npts*tr.syndynrec_dt < tr.sim.T2) ):
-        SynEI_dynrec = StateMonitor(SynEI, ['a'],
-                                    record=record_range,
-                                    dt=tr.syndynrec_dt,
-                                    name='SynEI_dynrec',
-                                    when='end', order=100)
+    if tr.synEIdynrec and want_syndynrec:
+        SynEI_dynrec = SynEI.run_regularly(record_weights_code.format(rec_id=3),
+                                           dt=tr.syndynrec_dt, when='end', order=100,
+                                           name='SynEI_dynrec')
         SynEI_dynrec.active=False
-        netw_objects.extend([SynEI_dynrec])  
 
     net = Network(*netw_objects)
 
@@ -773,10 +760,6 @@ def run_net(tr):
     set_active(GExc_spks, GInh_spks)
 
     run_phase(net, tr.sim.T5, 'T5')
-    
-    SynEE_a.record_single_timestep()
-    if tr.synei_a_nrecpoints>0 and tr.sim.T2 > 0.*second:
-        SynEI_a.record_single_timestep()
 
     ##########################################################################
     ############## -------------- Build & Run ------------------ #############
@@ -819,25 +802,23 @@ def run_net(tr):
         with open(raw_dir+'synei_stat.p','wb') as pfile:
             pickle.dump(SynEI_stat.get_states(),pfile)
 
-    if ( (tr.synEEdynrec or tr.synEIdynrec) and
-         (2*tr.syndynrec_npts*tr.syndynrec_dt < tr.sim.T2) ):
+    # weight snapshots (binary files written by output_files.cpp); the
+    # snapshots of synee_a and synei_a end with the weights at the end of T5
+    fpath = 'builds/%.4d/'%(tr.v_idx)
+    weight_recordings = [('synee_a', SynEE, True),
+                         ('synei_a', SynEI, tr.synei_a_nrecpoints>0 and tr.sim.T2>0*second),
+                         ('syneedynrec', SynEE, tr.synEEdynrec and want_syndynrec),
+                         ('syneidynrec', SynEI, tr.synEIdynrec and want_syndynrec)]
+    for fname, syn, recorded in weight_recordings:
+        if os.path.exists(fpath+fname) and not recorded:
+            os.remove(fpath+fname)
+        elif recorded:
+            final_t = T if fname in ['synee_a', 'synei_a'] else None
+            snapshots = read_weight_snapshots(fpath+fname, syn, final_t=final_t,
+                                              all_pairs=(syn is SynEE))
+            with open(raw_dir+fname+'.p','wb') as pfile:
+                pickle.dump(snapshots, pfile)
 
-        if tr.synEEdynrec:
-            with open(raw_dir+'syneedynrec.p','wb') as pfile:
-                pickle.dump(SynEE_dynrec.get_states(),
-                            pfile)
-        if tr.synEIdynrec:
-            with open(raw_dir+'syneidynrec.p','wb') as pfile:
-                pickle.dump(SynEI_dynrec.get_states(),
-                            pfile)            
-        
-    with open(raw_dir+'synee_a.p','wb') as pfile:
-        pickle.dump(SynEE_a.get_states(),pfile)
-
-    if tr.synei_a_nrecpoints>0 and tr.sim.T2 > 0.*second:
-        with open(raw_dir+'synei_a.p','wb') as pfile:
-            pickle.dump(SynEI_a.get_states(),pfile)
-        
 
     with open(raw_dir+'gexc_spks.p','wb') as pfile:
         pickle.dump(GExc_spks.get_states(),pfile)   
@@ -856,7 +837,6 @@ def run_net(tr):
 
 
     # ----------------- add raw data ------------------------
-    fpath = 'builds/%.4d/'%(tr.v_idx)
 
     # files written by output_files.cpp, with their number of columns
     # (see cpp_methods.py)

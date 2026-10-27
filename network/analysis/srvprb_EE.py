@@ -18,7 +18,7 @@ import sys, os, itertools, pickle
 import numpy as np
 from brian2.units import second
 
-from .utils import linear_scale_for_empty_log_axes
+from .utils import linear_scale_for_empty_log_axes, WeightSnapshots
 
 
 def srvprb_EE_figure(bpath):
@@ -85,24 +85,20 @@ def srvprb_EE_figure(bpath):
         axes[1,2].plot(centers, counts, label=label)
 
 
-        with open(bpath+'/raw/synee_a.p', 'rb') as pfile:
-            synee_a = pickle.load(pfile)
+        synee_a = WeightSnapshots(bpath+'/raw/synee_a.p')
 
-        active_at_t = np.sum(synee_a['syn_active'], axis=1)
+        active_at_t = synee_a.n_active()
 
-        all_at_t = np.shape(synee_a['syn_active'])[1]
+        all_at_t = synee_a.n_pairs
         assert all_at_t == nsp['N_e']*(nsp['N_e']-1)
 
-        axes[2,2].plot(synee_a['t'], active_at_t/all_at_t, lw=2,
+        axes[2,2].plot(synee_a.t, active_at_t/all_at_t, lw=2,
                      label=label)
 
         # ----------------
         tstep, bin_w, cutoff = -1, 1*second, 0
 
-        weight_at_t = synee_a['a'][tstep,:]
-        states_at_t = synee_a['syn_active'][tstep,:]
-
-        active_weight_at_t = weight_at_t[states_at_t==1]
+        _, _, active_weight_at_t = synee_a.active(tstep)
         active_weight_at_t_cutoff = active_weight_at_t[active_weight_at_t>cutoff]
 
         fraction_of_cutoff = len(active_weight_at_t_cutoff)/len(active_weight_at_t)    

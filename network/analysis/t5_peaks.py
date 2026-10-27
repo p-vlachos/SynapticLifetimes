@@ -182,17 +182,16 @@ def t5_raster_figure(bpath, nsp):
 
     # load weight input distributions from frequent burst participants
 
-    with open(bpath+'/raw/synee_a.p', 'rb') as pfile:
-        synee_a = pickle.load(pfile)
+    synee_a = WeightSnapshots(bpath+'/raw/synee_a.p')
 
-    print(np.shape(synee_a['a'][-1]), synee_a['t'][-1])
+    print(synee_a.n_active()[-1], synee_a.t[-1])
 
-    # EE synapses are stored source-major for all pairs i != j, build the
-    # full (pre, post) matrix so that A[:,n] are the inputs of neuron n
+    # full (pre, post) matrix of the final weights, so that A[:,n] are the
+    # inputs of neuron n
     N_e = nsp['N_e']
-    pre, post = np.nonzero(~np.eye(N_e, dtype=bool))
+    pre, post, a = synee_a.active(-1)
     A = np.zeros((N_e, N_e))
-    A[pre, post] = synee_a['a'][-1]
+    A[pre, post] = a
 
     # high bursts input distribution
     collect_burst_inputs, burst_sums, burst_ns = [], [], []

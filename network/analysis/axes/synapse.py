@@ -7,8 +7,7 @@ from scipy.stats import norm, lognorm
 from brian2.units import mV, ms, second
 from decimal import Decimal
 
-from ..utils import convert_to_EE_adjacency_matrix, \
-                    convert_to_EI_adjacency_matrix
+from ..utils import WeightSnapshots
 
 
 def synapse_weights_linear(ax, bpath, nsp, tstep, bins, cutoff,
@@ -17,18 +16,13 @@ def synapse_weights_linear(ax, bpath, nsp, tstep, bins, cutoff,
 
     try:
         if connections=='EE':
-            with open(bpath+'/raw/synee_a.p', 'rb') as pfile:
-                syn_a = pickle.load(pfile)
+            syn_a = WeightSnapshots(bpath+'/raw/synee_a.p')
             color, alpha = '#1f77b4', 1
         elif connections=='EI':
-            with open(bpath+'/raw/synei_a.p', 'rb') as pfile:
-                syn_a = pickle.load(pfile)
+            syn_a = WeightSnapshots(bpath+'/raw/synei_a.p')
             color, alpha = '#d62728', 0.7
 
-        weight_at_t = syn_a['a'][tstep,:]
-        states_at_t = syn_a['syn_active'][tstep,:]
-
-        active_weight_at_t = weight_at_t[states_at_t==1]
+        _, _, active_weight_at_t = syn_a.active(tstep)
 
         active_weight_at_t_cutoff = active_weight_at_t[active_weight_at_t>cutoff]
 
@@ -53,10 +47,10 @@ def synapse_weights_linear(ax, bpath, nsp, tstep, bins, cutoff,
 
         if connections=='EE':
             ax.set_title('E'+r'$\leftarrow$'+'E weights at t=\\SI{'+ \
-                         str(syn_a['t'][tstep]/second)+'}{s}')
+                         str(syn_a.t[tstep]/second)+'}{s}')
         elif connections=='EI':
             ax.set_title('E'+r'$\leftarrow$'+'I weights at t=\\SI{'+ \
-                         str(syn_a['t'][tstep]/second)+'}{s}')
+                         str(syn_a.t[tstep]/second)+'}{s}')
 
         ax.set_xlabel('synaptic weight')
 
@@ -75,18 +69,13 @@ def synapse_weights_log(ax, bpath, nsp, tstep, bins, cutoff, label='',
 
     try:
         if connections=='EE':
-            with open(bpath+'/raw/synee_a.p', 'rb') as pfile:
-                syn_a = pickle.load(pfile)
+            syn_a = WeightSnapshots(bpath+'/raw/synee_a.p')
             color, alpha = '#1f77b4', 1
         elif connections=='EI':
-            with open(bpath+'/raw/synei_a.p', 'rb') as pfile:
-                syn_a = pickle.load(pfile)
+            syn_a = WeightSnapshots(bpath+'/raw/synei_a.p')
             color, alpha = '#d62728', 0.7
 
-        weight_at_t = syn_a['a'][tstep,:]
-        states_at_t = syn_a['syn_active'][tstep,:]
-
-        active_weight_at_t = weight_at_t[states_at_t==1]
+        _, _, active_weight_at_t = syn_a.active(tstep)
 
         active_weight_at_t_cutoff = active_weight_at_t[active_weight_at_t>cutoff]
 
@@ -110,10 +99,10 @@ def synapse_weights_log(ax, bpath, nsp, tstep, bins, cutoff, label='',
 
         if connections=='EE':
             ax.set_title('E'+r'$\leftarrow$'+'E weights at t=\\SI{'+ \
-                         str(syn_a['t'][tstep]/second)+'}{s}')
+                         str(syn_a.t[tstep]/second)+'}{s}')
         elif connections=='EI':
             ax.set_title('E'+r'$\leftarrow$'+'I weights at t=\\SI{'+ \
-                         str(syn_a['t'][tstep]/second)+'}{s}')
+                         str(syn_a.t[tstep]/second)+'}{s}')
 
         ax.set_xlabel('log10 of synaptic weight')
 
@@ -205,24 +194,16 @@ def insP_trace(ax, bpath, nsp):
 def synEEdyn_data(ax, bpath, nsp, when, bins=50):
 
     try:
-        with open(bpath+'/raw/syneedynrec.p', 'rb') as pfile:
-            syndyn = pickle.load(pfile)
+        syndyn = WeightSnapshots(bpath+'/raw/syneedynrec.p')
 
         nrec = nsp['syndynrec_npts']
 
-        assert len(syndyn['t']) == nrec*2
+        assert len(syndyn) == nrec*2
 
-        if when=='start':
-            syn_a = syndyn['a'][:nrec]
-        elif when=='end':
-            syn_a = syndyn['a'][nrec:]
-            
-        dsyn_a = np.diff(syn_a, axis=0)
-
-        syn_a, dsyn_a = syn_a[:-1].flatten(), dsyn_a.flatten()
-        
-        idx = np.logical_or(syn_a!=0, dsyn_a!=0)
-        syn_a, dsyn_a = syn_a[idx], dsyn_a[idx]
+        # weight changes between consecutive snapshots
+        first = 0 if when=='start' else nrec
+        dsyn_a = np.concatenate([syndyn.weight_changes(k, k+1)[1]
+                                 for k in range(first, first+nrec-1)])
           
         ax.hist(dsyn_a, bins=bins)
         
@@ -235,17 +216,17 @@ def synEEdyn_data(ax, bpath, nsp, when, bins=50):
 
         if when=='start':
             title = r'$T=\text{\SI{'+ \
-                    '%d' %(int(syndyn['t'][0]/second)) +\
+                    '%d' %(int(syndyn.t[0]/second)) +\
                     r'}{s}}$ until $T=\text{\SI{'+\
-                    '%d' %(int(syndyn['t'][nrec-1]/second)) +\
+                    '%d' %(int(syndyn.t[nrec-1]/second)) +\
                     '}{s}}$'
 
         elif when=='end':
 
             title = r'$T=\text{\SI{'+ \
-                    '%d' %(int(syndyn['t'][nrec]/second)) +\
+                    '%d' %(int(syndyn.t[nrec]/second)) +\
                     r'}{s}}$ until $T=\text{\SI{'+\
-                    '%d' %(int(syndyn['t'][-1]/second)) +\
+                    '%d' %(int(syndyn.t[-1]/second)) +\
                     '}{s}}$'
 
         ax.set_title(title)
@@ -268,24 +249,16 @@ def synEIdyn_data(ax, bpath, nsp, when, bins=50):
     color, alpha = '#d62728', 0.7
 
     try:
-        with open(bpath+'/raw/syneidynrec.p', 'rb') as pfile:
-            syndyn = pickle.load(pfile)
+        syndyn = WeightSnapshots(bpath+'/raw/syneidynrec.p')
 
         nrec = nsp['syndynrec_npts']
 
-        assert len(syndyn['t']) == nrec*2
+        assert len(syndyn) == nrec*2
 
-        if when=='start':
-            syn_a = syndyn['a'][:nrec]
-        elif when=='end':
-            syn_a = syndyn['a'][nrec:]
-        
-        dsyn_a = np.diff(syn_a, axis=0)
-
-        syn_a, dsyn_a = syn_a[:-1].flatten(), dsyn_a.flatten()
-        
-        idx = np.logical_or(syn_a!=0, dsyn_a!=0)
-        syn_a, dsyn_a = syn_a[idx], dsyn_a[idx]
+        # weight changes between consecutive snapshots
+        first = 0 if when=='start' else nrec
+        dsyn_a = np.concatenate([syndyn.weight_changes(k, k+1)[1]
+                                 for k in range(first, first+nrec-1)])
           
         ax.hist(dsyn_a, bins=bins,
                 color=color, alpha=alpha)
@@ -299,17 +272,17 @@ def synEIdyn_data(ax, bpath, nsp, when, bins=50):
 
         if when=='start':
             title = r'$T=\text{\SI{'+ \
-                    '%d' %(int(syndyn['t'][0]/second)) +\
+                    '%d' %(int(syndyn.t[0]/second)) +\
                     r'}{s}}$ until $T=\text{\SI{'+\
-                    '%d' %(int(syndyn['t'][nrec-1]/second)) +\
+                    '%d' %(int(syndyn.t[nrec-1]/second)) +\
                     '}{s}}$'
 
         elif when=='end':
 
             title = r'$T=\text{\SI{'+ \
-                    '%d' %(int(syndyn['t'][nrec]/second)) +\
+                    '%d' %(int(syndyn.t[nrec]/second)) +\
                     r'}{s}}$ until $T=\text{\SI{'+\
-                    '%d' %(int(syndyn['t'][-1]/second)) +\
+                    '%d' %(int(syndyn.t[-1]/second)) +\
                     '}{s}}$'
 
         ax.set_title(title)
@@ -331,28 +304,24 @@ def synEIdyn_data(ax, bpath, nsp, when, bins=50):
 def n_active_synapses_exc(ax, bpath, nsp):
 
     try: 
-        with open(bpath+'/raw/synee_a.p', 'rb') as pfile:
-            synee_a = pickle.load(pfile)
-
+        synee_a = WeightSnapshots(bpath+'/raw/synee_a.p')
 
         # trace 1: data from synEE_a (~11 data points)
-        active_at_t = np.sum(synee_a['syn_active'], axis=1)
+        active_at_t = synee_a.n_active()
 
         print(active_at_t)
-        print(synee_a['t'])
+        print(synee_a.t)
 
-        all_at_t = np.shape(synee_a['syn_active'])[1]
+        all_at_t = synee_a.n_pairs
         assert all_at_t == nsp['N_e']*(nsp['N_e']-1)
 
-        ax.plot(synee_a['t'], active_at_t/all_at_t, lw=2, label="active")
+        ax.plot(synee_a.t, active_at_t/all_at_t, lw=2, label="active")
 
         # trace2 - only synapse active and larger than c
-        measurable_at_t = (synee_a['a'] > nsp['strct_c']).astype(int)
+        measurable_at_t = [np.sum(synee_a.active(k)[2] > nsp['strct_c'])
+                           for k in range(len(synee_a))]
 
-        assert np.array_equal(measurable_at_t,
-                              measurable_at_t * synee_a['syn_active'])
-        
-        ax.plot(synee_a['t'], np.sum(measurable_at_t,axis=1)/all_at_t,
+        ax.plot(synee_a.t, np.array(measurable_at_t)/all_at_t,
                 lw=2, color='deepskyblue', label=f'active and a > {nsp["strct_c"]}')
     
     except FileNotFoundError:

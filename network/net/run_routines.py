@@ -4,7 +4,7 @@ from brian2.units import second
 # the functions used in the model equations are looked up in the namespace
 # of the module that calls net.run
 from .cpp_methods import syn_scale, syn_EI_scale, \
-                         record_turnover, record_spk, record_spk_EI
+                         record_turnover, record_spk, record_spk_EI, record_weights
 
 
 def run_phase(net, duration, name):

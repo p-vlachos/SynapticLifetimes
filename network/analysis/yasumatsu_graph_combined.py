@@ -19,6 +19,8 @@ import numpy as np
 import scipy.stats
 from brian2.units import second
 
+from .utils import WeightSnapshots
+
 
 def yasumatsu_graph(bpath, nsp):
 
@@ -30,25 +32,20 @@ def yasumatsu_graph(bpath, nsp):
         with open(bpath+'/raw/namespace.p', 'rb') as pfile:
             nsp=pickle.load(pfile)
 
-        with open(bpath+'/raw/synee_a.p', 'rb') as pfile:
-            synee_a = pickle.load(pfile)
+        synee_a = WeightSnapshots(bpath+'/raw/synee_a.p')
 
 
         for k,stepsize in enumerate([1,5,25]): 
 
             tstart = 100
-            label = 't=\\SI{' + '%d' %((synee_a['t'][tstart+stepsize] - synee_a['t'][tstart])/second) + '}{s}'
+            label = 't=\\SI{' + '%d' %((synee_a.t[tstart+stepsize] - synee_a.t[tstart])/second) + '}{s}'
 
 
-            syn_a = synee_a['a'][tstart:,:]
-            syn_a = syn_a[np.arange(0,1000-tstart+stepsize,stepsize),:]
-
-            dsyn_a = np.diff(syn_a, axis=0)
-
-            syn_a, dsyn_a = syn_a[:-1].flatten(), dsyn_a.flatten()
-
-            idx = np.logical_or(syn_a!=0, dsyn_a!=0)
-            syn_a, dsyn_a = syn_a[idx], dsyn_a[idx]
+            # weights and their changes between the snapshots tstart, tstart+stepsize, ...
+            ks = tstart + np.arange(0,1000-tstart+stepsize,stepsize)
+            changes = [synee_a.weight_changes(k0, k1) for k0, k1 in zip(ks[:-1], ks[1:])]
+            syn_a = np.concatenate([w for w, _ in changes])
+            dsyn_a = np.concatenate([dw for _, dw in changes])
 
 
             print(len(syn_a), len(dsyn_a))
@@ -91,18 +88,14 @@ def yasumatsu_graph(bpath, nsp):
 
             tstart = 0
             tstop = 50
-            label = 't=\\SI{' + '%d' %((synee_a['t'][tstart+stepsize] - synee_a['t'][tstart])/second) + '}{s}'
+            label = 't=\\SI{' + '%d' %((synee_a.t[tstart+stepsize] - synee_a.t[tstart])/second) + '}{s}'
 
 
-            syn_a = synee_a['a'][tstart:tstop,:]
-            syn_a = syn_a[np.arange(0,tstop-tstart,stepsize),:]
-
-            dsyn_a = np.diff(syn_a, axis=0)
-
-            syn_a, dsyn_a = syn_a[:-1].flatten(), dsyn_a.flatten()
-
-            idx = np.logical_or(syn_a!=0, dsyn_a!=0)
-            syn_a, dsyn_a = syn_a[idx], dsyn_a[idx]
+            # weights and their changes between the snapshots tstart, tstart+stepsize, ...
+            ks = tstart + np.arange(0,tstop-tstart,stepsize)
+            changes = [synee_a.weight_changes(k0, k1) for k0, k1 in zip(ks[:-1], ks[1:])]
+            syn_a = np.concatenate([w for w, _ in changes])
+            dsyn_a = np.concatenate([dw for _, dw in changes])
 
 
             print(len(syn_a), len(dsyn_a))

@@ -18,6 +18,8 @@ import sys, os, itertools, pickle, decimal
 import numpy as np
 from brian2.units import second
 
+from .utils import WeightSnapshots
+
 
 def yasumatsu_plot(bpath, nsp):
 
@@ -29,19 +31,16 @@ def yasumatsu_plot(bpath, nsp):
         with open(bpath+'/raw/namespace.p', 'rb') as pfile:
             nsp=pickle.load(pfile)
 
-        with open(bpath+'/raw/synee_a.p', 'rb') as pfile:
-            synee_a = pickle.load(pfile)
+        synee_a = WeightSnapshots(bpath+'/raw/synee_a.p')
 
 
         for j,(tstart,tstop) in enumerate([(-10,-1), (-5,-1), (-2,-1)]):
 
-            label = 't=\\SI{' + '%d' %((synee_a['t'][tstop] - synee_a['t'][tstart])/second) + '}{s}' 
+            label = 't=\\SI{' + '%d' %((synee_a.t[tstop] - synee_a.t[tstart])/second) + '}{s}' 
             
             bin_w, cutoff = 1*second, 0
 
-            weight_dt = synee_a['a'][tstop,:] - synee_a['a'][tstart,:]
-
-            weight_tstart, weight_dt = synee_a['a'][tstart,:].flatten(), weight_dt.flatten()
+            weight_tstart, weight_dt = synee_a.weight_changes(tstart, tstop)
 
             idx = np.logical_or(weight_dt!=0,weight_tstart!=0)
             weight_tstart_slct = weight_tstart[idx]
@@ -71,13 +70,11 @@ def yasumatsu_plot(bpath, nsp):
 
         for j,(tstart,tstop) in enumerate([(10,19), (10,14), (10,11)]):
 
-            label = 't=\\SI{' + '%d' %((synee_a['t'][tstop] - synee_a['t'][tstart])/second) + '}{s}' 
+            label = 't=\\SI{' + '%d' %((synee_a.t[tstop] - synee_a.t[tstart])/second) + '}{s}' 
             
             bin_w, cutoff = 1*second, 0
 
-            weight_dt = synee_a['a'][tstop,:] - synee_a['a'][tstart,:]
-
-            weight_tstart, weight_dt = synee_a['a'][tstart,:].flatten(), weight_dt.flatten()
+            weight_tstart, weight_dt = synee_a.weight_changes(tstart, tstop)
 
             idx = np.logical_or(weight_dt!=0,weight_tstart!=0)
             weight_tstart_slct = weight_tstart[idx]
