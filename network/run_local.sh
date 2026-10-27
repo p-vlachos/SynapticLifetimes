@@ -1,83 +1,45 @@
 #!/bin/bash
+# Runs the simulations in the current run folder (called by run.sh and run_test.sh).
+# usage: run_local.sh <run name> <mode: run | test | net-test> [<parallel sims>] [<test dir>]
+
+RUNNAME=$1
+MODE=$2
+NPARSIM=$3
+TESTDIR=$4
 
 echo ""
-echo ""
-echo "Running " $1
+echo "Running $RUNNAME (mode: $MODE)"
 echo ""
 
-if [ "$8" == "manual" ]; then
-    echo "mode: test, manual"
+TESTFLAG=''
+if [ "$MODE" != "run" ]; then
     TESTFLAG='-t'
-    DESTINATION='tests/man'
-elif [ "$8" == "net-test" ]; then
-    echo "mode: test, net-test"
-    TESTFLAG='-t'
-else
-    echo "mode: result run"
-    TESTFLAG=''
-    DESTINATION='completed'
 fi
 
+PYTHONPATH="$PWD/src" python -m net.xstrct_run ${NPARSIM:+-c $NPARSIM} $TESTFLAG
 
-if $6
-then
-   echo "doing local"
-   PYTHONPATH="$PWD/src" python -m net.xstrct_run -c $3 $TESTFLAG
-else
-   echo "doing nonlocal"
-   PYTHONPATH="$PWD/src" srun --hint=memory_bound -p $7 -c $4 --mem $5 --time 29-00 python -m net.xstrct_run -c $3 $TESTFLAG
-fi
+if [ "$MODE" == "net-test" ]; then
 
-# # with multiprocessing. currently defunct because of a problem
-# # with tex locking and memory consumption issues
-# srun -p x-men -c $4 --mem $5 python default_analysis.py data/*.hdf5 $3
-
-# final zero sys.argv sets mode to sequential
-#cd ../
-#echo "Running analysis..."
-#mv code/run_analysis_fb.sh .
-#./run_analysis_fb.sh
-
-
-# --------------------------------------------------
-
-
-if [ "$8" == "net-test" ];
-then
-
-    # 6 run python script to analyze expected
-    # outputs if in automated testmode!
-
+    # check the expected outputs of the test (the run folder stays in ../tests/testing/)
     export EIB_STANDALONE_TEST=1
-    PYTHONPATH="$PWD/src" python "./src/"$9"tests.py" 2> test.log
-
-    ret=$?
-    if [ $ret -ne 0 ]; then
-	echo "Error"
+    PYTHONPATH="$PWD/src" python "./src/${TESTDIR}tests.py" 2> test.log
+    if [ $? -ne 0 ]; then
+        echo "Error: test failed, see tests/testing/$RUNNAME/test.log"
+    else
+        echo "Test passed."
     fi
 
-    # # 7 copy log file produced by python
-
-    #mv test.log $CODEDIR
-
-
-    # # 8 (optional) self destruct
-
-
 else
 
+    if [ "$MODE" == "run" ]; then
+        DESTINATION='completed'
+    else
+        DESTINATION='tests/man'
+    fi
 
     cp src/run_analysis.sh .
-
-    echo "Done."
-
-
-    CRDIR=$(pwd);
-
-
     mkdir -p ../../$DESTINATION/
-    mv $CRDIR ../../$DESTINATION/$1
-
-    #echo "Not cleaning up, remove manually"
+    mv "$(pwd)" ../../$DESTINATION/$RUNNAME
+    echo "Done. Results in $DESTINATION/$RUNNAME"
 
 fi

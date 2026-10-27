@@ -8,7 +8,8 @@ from .xstrct_netw import run_net
 from .post_processing import post_process
 
 
-def main(name, explore_dict, postprocess=False, ncores=1, testrun=False, commit=None):
+def main(name, explore_dict, postprocess=False, ncores=1, testrun=False, commit=None,
+         uncommitted_changes=False):
 
     if not testrun:
         if commit is None:
@@ -42,6 +43,8 @@ def main(name, explore_dict, postprocess=False, ncores=1, testrun=False, commit=
     if not testrun:
         tr.f_add_parameter('mconfig.git.sha1', str(commit))
         tr.f_add_parameter('mconfig.git.message', commit.message)
+        # the changes are saved in uncommitted_changes.diff of the run folder
+        tr.f_add_parameter('mconfig.git.uncommitted_changes', uncommitted_changes)
 
     tr.f_explore(explore_dict)
 

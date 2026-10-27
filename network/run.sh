@@ -1,96 +1,67 @@
 #!/bin/bash
 
-NPARSIM=1
-NCORES=1
-MEMGB=4G
-LOCAL_COMPUTE=false
-POSTFIX=""
-TESTRUN='manual'
-TESTDIR_FULL=''
-DEBUG=false
-CLUSTER='x-men'
+usage() {
+    cat <<EOF
+usage: ./run.sh [-t] [-b] [-n N] [-P name] [-D description]
+
+Runs all parameter sets of net/explored_params.py, in a copy of the code in
+../running/<timestamp>_<name>/, which is moved to ../completed/ when finished.
+The git commit is recorded with the results; uncommitted changes of tracked
+files are saved in uncommitted_changes.diff of the run folder.
+
+  -t          test run: no git record, results go to ../tests/man/
+  -b          run in the background (output in nohup.out of the run folder)
+  -n N        run at most N simulations in parallel (default: all parameter
+              sets, at most the number of available cores; each simulation
+              needs ~4 GB of memory with N_e=1600)
+  -P name     name of the run folder (default: name in net/explored_params.py)
+  -D text     description, saved in the file 'description' of the run folder
+  -h          show this help
+EOF
+}
+
+MODE='run'
+BACKGROUND=false
+NPARSIM=''
+NAME=''
 DESCRIPTION=''
 
-while getopts "hln:c:m:P:Eds" opt; do
+while getopts "tbn:P:D:h" opt; do
     case $opt in
-    h) echo "usage: $0 [-h] [-a] [-l] ..."; exit ;;
-    l) LOCAL_COMPUTE=true ;;    # run it locally (if false put on cluster)
-    n) NPARSIM=$OPTARG ;;   # number of sims to run in paralel (set equal to c)
-    c) NCORES=$OPTARG ;;    # cpus to reserve
-    m) MEMGB=$OPTARG ;; # memory to reserve in total, with unit (e.g. 8G; ~4G per sim with N_e=1600)
-    E) TESTRUN="false" ;;
-    d) DEBUG=true ;;    # Do not go in background but run in terminal
-    s) CLUSTER='sleuths' ;; # cluster name
-    P) POSTFIX=$OPTARG ;; # Give a name
-    \?) echo "error: option -$OPTARG is not implemented"; exit ;;
+    t) MODE='test' ;;
+    b) BACKGROUND=true ;;
+    n) NPARSIM=$OPTARG ;;
+    P) NAME=$OPTARG ;;
+    D) DESCRIPTION=$OPTARG ;;
+    h) usage; exit 0 ;;
+    *) usage; exit 1 ;;
     esac
 done
 
-if [ "$POSTFIX" == "" ];
-then
-    read -p "Postfix: " POSTFIX
+CODEDIR=$(pwd)
+
+if [ -z "$NAME" ]; then
+    NAME=$(PYTHONPATH="$CODEDIR" python -c "from net.explored_params import name; print(name)") || exit 1
 fi
 
-if [ "$TESTRUN" == "false" ]; 
+# run folder: timestamp + name
+RUNNAME=$(date +"%y%m%d_%H%M%S")_$NAME
+
+mkdir -p ../running/$RUNNAME
+rsync -a --exclude='*~' --exclude='__pycache__' --exclude='myenv/' \
+      $CODEDIR/ ../running/$RUNNAME/src/
+
+cd ../running/$RUNNAME
+
+if [ -n "$DESCRIPTION" ]; then
+    echo "$DESCRIPTION" > ./description
+fi
+
+echo "Run folder: running/$RUNNAME"
+if $BACKGROUND
 then
-    read -p "Description: " DESCRIPTION
-fi    
-
-# echo $NPARSIM
-# echo $NCORES
-# echo $MEMGB
-# echo $POSTFIX
-# echo $LOCAL_COMPUTE
-# echo $DESCRIPTION
-
-
-CODEDIR=$(pwd);
-SRCDIR=$(basename $CODEDIR)
-
-# use timestamp + POSTFIX as temporary folder name
-TIMESTAMP=$(date +"%y%m%d_%H%M%S")$POSTFIX;
-
-
-mkdir -p ../running/$TIMESTAMP
-
-if [[ -d ../analysis-dev/ ]]
-then
-    echo "Note: analysis-dev/ directory found." 
-    echo "Replacing analysis/ with analysis-dev/ in output folder."
-
-    rsync -a --exclude='*~' --exclude='myenv/' --exclude='analysis/' \
-	  $CODEDIR/ ../running/$TIMESTAMP/src/
-
-    rsync -a --delete --exclude='*~' --exclude='__pycache__' \
-	  $CODEDIR/../analysis-dev/ ../running/$TIMESTAMP/src/analysis
-
+    nohup ./src/run_local.sh $RUNNAME $MODE "$NPARSIM" > nohup.out 2>&1 &
+    echo "Running in the background, output in running/$RUNNAME/nohup.out"
 else
-    echo "Note: analysis-dev/ directory not found." 
-    echo "Proceeding without replacment."
-
-    rsync -a --exclude='*~' --exclude='myenv/' \
-	  $CODEDIR/ ../running/$TIMESTAMP/src/
-fi
-
-cd ../running/$TIMESTAMP
-
-# make sure nohup.out doesn't exist
-rm -f nohup.out
-
-if [[ ! -z $DESCRIPTION ]];
-then
-   echo $DESCRIPTION > ./description
-fi
-
-if $DEBUG
-then
-   echo "debug mode" 
-   ./src/run_local.sh $TIMESTAMP $CODEDIR $NPARSIM \
-                          $NCORES $MEMGB $LOCAL_COMPUTE \
-                          $CLUSTER $TESTRUN
-else
-    echo "normal mode"
-    nohup ./src/run_local.sh $TIMESTAMP $CODEDIR $NPARSIM \
-                          $NCORES $MEMGB $LOCAL_COMPUTE \
-                          $CLUSTER $TESTRUN &
+    ./src/run_local.sh $RUNNAME $MODE "$NPARSIM"
 fi

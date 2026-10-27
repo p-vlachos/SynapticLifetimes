@@ -1,89 +1,55 @@
 #!/bin/bash
 
-# 1 read out folder
+usage() {
+    cat <<EOF
+usage: ./run_test.sh [-b] <test dir>     e.g. ./run_test.sh tests/net_tests/test_standard_net/
 
-LOCAL_COMPUTE=false
-DEBUG=false
-CLUSTER='x-men'
-TESTRUN='net-test'
+Runs the simulations of the test (its explored_params.py) in a copy of the code in
+../tests/testing/<timestamp>_<test>/ and checks the results with its tests.py
+(output in test.log of that folder).
 
-while getopts "ld" opt; do
+  -b    run in the background (output in nohup.out of the test folder)
+  -h    show this help
+EOF
+}
+
+BACKGROUND=false
+
+while getopts "bh" opt; do
     case $opt in
-    l) LOCAL_COMPUTE=true ;;
-    d) DEBUG=true ;;    # run in the foreground (e.g. inside a Slurm batch job)
-    \?) echo "error: option -$OPTARG is not implemented"; exit ;;
+    b) BACKGROUND=true ;;
+    h) usage; exit 0 ;;
+    *) usage; exit 1 ;;
     esac
 done
 
-# combine getopts with positional parameters, see
-# https://stackoverflow.com/questions/11742996
-
 TESTDIR_FULL=${@:$OPTIND:1}
+if [ -z "$TESTDIR_FULL" ]; then
+    usage; exit 1
+fi
+# with a trailing slash, as used for the paths below
+TESTDIR_FULL=${TESTDIR_FULL%/}/
 TESTDIR=$(basename $TESTDIR_FULL)
 
-CODEDIR=$(pwd);
+CODEDIR=$(pwd)
 
-# use timestamp + TESTDIR as working dir name
-WDIR=$(date +"%y%m%d_%H%M%S")"_"$TESTDIR;
+# test folder: timestamp + test name
+RUNNAME=$(date +"%y%m%d_%H%M%S")_$TESTDIR
 
+mkdir -p ../tests/testing/$RUNNAME
+rsync -a --exclude='*~' --exclude='__pycache__' --exclude='myenv/' \
+      $CODEDIR/ ../tests/testing/$RUNNAME/src/
 
-# 2 copy to location with appropriate file name
+cd ../tests/testing/$RUNNAME
 
-mkdir -p ../tests/testing/$WDIR
+# parameters of the test
+cp ./src/${TESTDIR_FULL}explored_params.py ./src/net/
 
-if [[ -d ../analysis-dev/ ]]
+echo "Test folder: tests/testing/$RUNNAME"
+if $BACKGROUND
 then
-    echo "Note: analysis-dev/ directory found." 
-    echo "Replacing analysis/ with analysis-dev/ in output folder."
-
-    rsync -a --exclude='*~' --exclude='myenv/' --exclude='analysis/' \
-	  $CODEDIR/ ../tests/testing/$WDIR/src/
-
-    rsync -a --delete --exclude='*~' --exclude='__pycache__' \
-	  $CODEDIR/../analysis-dev/ ../tests/testing/$WDIR/src/analysis
-
+    nohup ./src/run_local.sh $RUNNAME net-test "" $TESTDIR_FULL > nohup.out 2>&1 &
+    echo "Running in the background, output in tests/testing/$RUNNAME/nohup.out"
 else
-    echo "Note: analysis-dev/ directory not found." 
-    echo "Proceeding without replacment."
-
-    rsync -a --exclude='*~' --exclude='myenv/' \
-	  $CODEDIR/ ../tests/testing/$WDIR/src/
+    ./src/run_local.sh $RUNNAME net-test "" $TESTDIR_FULL
 fi
-
-
-cd ../tests/testing/$WDIR
-
-
-# 3 read out simulation set up (cores, memory etc...)
-
-source "./src/"$TESTDIR_FULL"simulation.config"
-
-# echo $NPARSIM
-# echo $NCORES
-# echo $MEMGB
-
-
-# 4 replace explored_params
-
-cp "./src/"$TESTDIR_FULL"explored_params.py" ./src/net/
-
-
-# 5 start simulation through run_local with settings from 3)
-
-rm -f nohup.out
-
-if $DEBUG
-then
-    ./src/run_local.sh $WDIR $CODEDIR $NPARSIM \
-                       $NCORES $MEMGB $LOCAL_COMPUTE \
-                       $CLUSTER $TESTRUN $TESTDIR_FULL
-else
-    nohup ./src/run_local.sh $WDIR $CODEDIR $NPARSIM \
-                              $NCORES $MEMGB $LOCAL_COMPUTE \
-                              $CLUSTER $TESTRUN $TESTDIR_FULL &
-fi
-
-
-
-
-
