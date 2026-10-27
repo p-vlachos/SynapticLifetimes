@@ -8,23 +8,20 @@
 #SBATCH --time=12:00:00              # a full run (N_e=1600, T2=5000 s, T5=1500 s) takes ~3.5 h
 
 # Runs network/run.sh, i.e. all parameter sets of network/net/explored_params.py, on one node.
-# Submit from the repository or a folder inside it, e.g. submitted/:
+# Submit from the folder where the job log should go, e.g.:
 #
-#   cd SynapticLifetimes/submitted
-#   sbatch ../submit.slurm             (options of run.sh can be added, e.g. -n 4)
+#   cd ~/submitted
+#   sbatch ~/projects/SynapticLifetimes/submit.slurm      (options of run.sh can be added, e.g. -n 4)
 #
 # The job log shows the progress and errors; the results and the complete log (run.log)
 # are saved in completed/<timestamp>_<name>/ of the repository.
 
-# the repository: the submission folder or the first folder above it with network/run.sh
-REPO=$SLURM_SUBMIT_DIR
-while [ ! -f "$REPO/network/run.sh" ]; do
-    if [ "$REPO" = "/" ]; then
-        echo "error: submit from the repository or a folder inside it"
-        exit 1
-    fi
-    REPO=$(dirname "$REPO")
-done
+# the repository (adapt if it is somewhere else)
+REPO=$HOME/projects/SynapticLifetimes
+if [ ! -f "$REPO/network/run.sh" ]; then
+    echo "error: repository not found at $REPO (see REPO in submit.slurm)"
+    exit 1
+fi
 
 # the conda environment (see README); adapt the path if conda is installed elsewhere
 source "$HOME/miniforge3/bin/activate" synlife

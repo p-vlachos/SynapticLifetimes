@@ -71,18 +71,18 @@ A full simulation with the default parameters (N_e=1600, T2=5000 s, T5=1500 s) t
 ** Running on a Slurm cluster
 
 The job script ~submit.slurm~ (repository root) runs ~run.sh~ on one whole node, so that all
-simulations run in parallel. Create a folder for the job logs in the repository, e.g.
-~submitted/~, and submit from there:
+simulations run in parallel. It expects the repository in ~~/projects/SynapticLifetimes~ (line
+~REPO=...~ in ~submit.slurm~). Submit from the folder where the job logs should go, e.g.
+~~/submitted~:
 
 #+BEGIN_SRC sh
-cd SynapticLifetimes
-mkdir -p submitted && cd submitted
-sbatch ../submit.slurm
+cd ~/submitted
+sbatch ~/projects/SynapticLifetimes/submit.slurm
 #+END_SRC
 
 - ~squeue -u $USER~ shows the job, ~tail -f synlife_<jobid>.log~ its progress and errors.
 - The results are saved in ~completed/<timestamp>_<name>/~ as for local runs.
-- Options of ~run.sh~ can be added: ~sbatch ../submit.slurm -n 4~.
+- Options of ~run.sh~ can be added: ~sbatch ~/projects/SynapticLifetimes/submit.slurm -n 4~.
 - At the top of ~submit.slurm~: the partition (~general1,general2~ on Goethe) and the time
   limit (12 h). It activates the conda environment of ~$HOME/miniforge3~; change that line if
   conda is installed elsewhere, and add ~module load~ lines if the cluster needs them for ~g++~
