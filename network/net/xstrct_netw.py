@@ -4,7 +4,7 @@ import os, shutil, pickle
 from . import models as mod, network_features
 from .brian2objects.binnedactivitymonitor import BinnedActivityMonitor
 from .utils import generate_connections, generate_N_connections, \
-                   generate_dd_connectivity, pair_distances
+                   generate_dd_connectivity
 
 import numpy as np
 import pypet
@@ -391,30 +391,21 @@ def run_net(tr):
     # all EI synapses are active
     SynEI.syn_active, SynEI.a = 1, tr.a_ei
 
+    # synaptic delays, drawn in C++ (by Brian2) for each synapse
     if tr.syn_delay_active:
 
         if tr.syn_dd_delay_active:
             if not tr.ddcon_active:
                 raise ValueError("syn_dd_delay_active requires ddcon_active")
-            dd_delay_args = dict(velocity=tr.syn_dd_delay_velocity, rel_sd=tr.syn_dd_delay_rel_sd)
-            pos = {'E': (np.array(GExc.x), np.array(GExc.y)), 'I': (np.array(GInh.x), np.array(GInh.y))}
-            def dist(pre, post, src, tar):
-                return pair_distances(*pos[pre], *pos[post], src, tar, float(tr.grid_size/metre), tr.grid_wrap)
-            sEE_src, sEE_tar = np.nonzero(~np.eye(tr.N_e, dtype=bool))
-            ee_delays = network_features.synapse_dd_delays(dist('E', 'E', sEE_src, sEE_tar), SynEE, **dd_delay_args)
-            ei_delays = network_features.synapse_dd_delays(dist('I', 'E', sEI_src, sEI_tar), SynEI, **dd_delay_args)
-            ii_delays = network_features.synapse_dd_delays(dist('I', 'I', sII_src, sII_tar), SynII, **dd_delay_args)
-            ie_delays = network_features.synapse_dd_delays(dist('E', 'I', sIE_src, sIE_tar), SynIE, **dd_delay_args)
+            # distance/velocity, with a standard deviation relative to the mean
+            delay_expr = (f"{network_features.distance_expression(tr.grid_wrap)}/syn_dd_delay_velocity"
+                          " * clip(1 + syn_dd_delay_rel_sd*randn(), 0, inf)")
+            for syn in [SynEE, SynEI, SynII, SynIE]:
+                syn.delay = delay_expr
         else:
-            shapeEE, shapeEI, shapeII, shapeIE = n_EE, len(sEI_src), len(sII_src), len(sIE_src)
-            ee_delays = network_features.synapse_delays(tr.synEE_delay, tr.synEE_delay_windowsize, SynEE, shapeEE)
-            ei_delays = network_features.synapse_delays(tr.synEI_delay, tr.synEI_delay_windowsize, SynEI, shapeEI)
-            ii_delays = network_features.synapse_delays(tr.synII_delay, tr.synII_delay_windowsize, SynII, shapeII)
-            ie_delays = network_features.synapse_delays(tr.synIE_delay, tr.synIE_delay_windowsize, SynIE, shapeIE)
-
-        tr.f_add_result("sEI_delays", ei_delays)
-        tr.f_add_result("sII_delays", ii_delays)
-        tr.f_add_result("sIE_delays", ie_delays)
+            # uniform in [delay - windowsize/2, delay + windowsize/2]
+            for syn, name in [(SynEE, 'synEE'), (SynEI, 'synEI'), (SynII, 'synII'), (SynIE, 'synIE')]:
+                syn.delay = f"{name}_delay - {name}_delay_windowsize/2 + rand()*{name}_delay_windowsize"
 
     # recording of stdp in T4
     SynEE.stdp_rec_start = tr.T1+tr.T2+tr.T3

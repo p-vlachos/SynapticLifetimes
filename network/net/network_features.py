@@ -20,44 +20,14 @@ def set_summed_variable_clock(syn, varname, dt, order=None):
         updater.order = order
 
 
-def synapse_delays(syn_delay: ms, syn_delay_windowsize: ms, Syn: Synapses, shape):
+def distance_expression(grid_wrap):
     """
-        Configure pre-synaptic delays. Similar to Brunel 2000 these are uniformly distributed.
-        The delay is the center of the uniform distribution, while the window size defines the
-        total width of the distribution.
-
-        Related parameters:
-
-        - :data:`net.standard_params.synEE_delay`
-        - :data:`net.standard_params.synEE_delay_windowsize`
-        - :data:`net.standard_params.synEI_delay`
-        - :data:`net.standard_params.synEI_delay_windowsize`
+        Brian2 expression for the distance between the pre- and postsynaptic neuron of a synapse
+        (positions x, y), on a torus of side length grid_size if grid_wrap.
     """
-    # need to create these for all synapses, not only the initially active ones
-    delays = np.random.uniform(low=(syn_delay - syn_delay_windowsize / 2)/second,
-                               high=(syn_delay + syn_delay_windowsize / 2)/second,
-                               size=shape)
-    Syn.delay = delays*second
-    return delays  # in seconds
-
-
-def synapse_dd_delays(dist, Syn: Synapses, velocity, rel_sd):
-    """
-        Configure distance-dependent pre-synaptic delays: the delay of each synapse is
-        drawn from a normal distribution with mean distance/velocity and a standard
-        deviation proportional to the mean (negative values are set to zero).
-
-        :param dist: distance (in metre, without units) of each synapse of ``Syn``
-
-        Related parameters:
-
-        - :data:`net.standard_params.syn_dd_delay_velocity`
-        - :data:`net.standard_params.syn_dd_delay_rel_sd`
-    """
-    # need to create these for all synapses, not only the initially active ones
-    mean = np.asarray(dist)*metre / velocity
-    delays = np.random.normal(mean/second, rel_sd*mean/second)
-    delays[delays < 0] = 0  # ensure there are non-negative values
-
-    Syn.delay = delays*second
-    return delays  # in seconds
+    if not grid_wrap:
+        return "sqrt((x_pre - x_post)**2 + (y_pre - y_post)**2)"
+    def wrapped(c):
+        d = f"abs({c}_pre - {c}_post)"
+        return f"((grid_size - {d})*int({d} > 0.5*grid_size) + {d}*int({d} <= 0.5*grid_size))"
+    return f"sqrt({wrapped('x')}**2 + {wrapped('y')}**2)"

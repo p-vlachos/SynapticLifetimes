@@ -68,16 +68,6 @@ def distances(src_x, src_y, tar_x, tar_y, grid_size, grid_wrap):
     return np.sqrt(np.sum(d**2, axis=-1))
 
 
-def pair_distances(src_x, src_y, tar_x, tar_y, src_idx, tar_idx, grid_size, grid_wrap):
-    """ Distances (in metre, without units) of the source-target pairs (src_idx[k], tar_idx[k]). """
-    dx = np.abs(src_x[src_idx] - tar_x[tar_idx])
-    dy = np.abs(src_y[src_idx] - tar_y[tar_idx])
-    if grid_wrap:
-        dx = np.where(dx > grid_size/2, grid_size - dx, dx)
-        dy = np.where(dy > grid_size/2, grid_size - dy, dy)
-    return np.sqrt(dx**2 + dy**2)
-
-
 def _dd_probability_blocks(src_x, src_y, tar_x, tar_y, sigma, grid_size, grid_wrap, same, block_rows):
     """ Yields (first row, p) for blocks of source rows, p = Gaussian of the distances
         (self-connections set to 0 if source and target pool are the same). """
