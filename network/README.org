@@ -59,10 +59,11 @@ variable ~name~ labels the run. Then, within ~network/~:
 runs all parameter sets in parallel (at most one per core) in
 ~running/<timestamp>_<name>/~, which is moved to ~completed/~ when finished. The git commit is
 recorded with the results; uncommitted changes of tracked files are saved in
-~uncommitted_changes.diff~ of the run folder. Options (~./run.sh -h~):
+~uncommitted_changes.diff~ of the run folder. The complete output is printed and saved in
+~run.log~ of the run folder. Options (~./run.sh -h~):
 
 | ~-t~       | test run: no git record, results in ~tests/man/~                   |
-| ~-b~       | run in the background (output in ~nohup.out~ of the run folder)     |
+| ~-b~       | run in the background (output only in ~run.log~ of the run folder)  |
 | ~-n N~     | at most N simulations in parallel (~4 GB each with N_e=1600)        |
 | ~-P name~  | name of the run folder instead of ~name~                            |
 | ~-D text~  | description, saved in the file ~description~ of the run folder      |
@@ -72,10 +73,12 @@ To run the post-processing of a finished run again (e.g. after changing the anal
 
 ** Run on a Slurm cluster
 
-From the repository root, ~sbatch submit.slurm~ runs ~run.sh~ on one whole node (all parameter
-sets in parallel, all memory of the node, at most 12 h); options of ~run.sh~ can be added, e.g.
-~sbatch submit.slurm -t~. The progress is written to ~synlife_<jobid>.log~. Add a partition or
-~module load~ lines in ~submit.slurm~ if your cluster needs them.
+~sbatch submit.slurm~ runs ~run.sh~ on one whole node (all parameter sets in parallel, all memory
+of the node, at most 12 h); options of ~run.sh~ can be added, e.g. ~sbatch submit.slurm -t~. It
+can be submitted from any folder, e.g. a folder ~submitted/~ for the job logs:
+~cd submitted; sbatch ../submit.slurm~. The job log (~synlife_<jobid>.log~ in the submission
+folder) shows the progress and errors; all data and the complete log (~run.log~) are saved in the
+run folder in the repository. Add ~module load~ lines in ~submit.slurm~ if your cluster needs them.
 
 The job uses the venv ~network/myenv~ if it exists, otherwise the conda environment ~synlife~
 (of the conda installation in ~$CONDA_BASE~, default ~~/miniforge3~). Without conda, create the

@@ -8,11 +8,13 @@
 #SBATCH --partition=general1,general2      # partitions of the Goethe cluster (see sinfo)
 
 # Runs all parameter sets of network/net/explored_params.py on one node. Can be submitted from
-# any folder (the job log is written there):
-#   sbatch submit.slurm                  real run, results in completed/<timestamp>_<name>/
-#   sbatch submit.slurm -t               test run, results in tests/man/
-#   sbatch submit.slurm -D "description" (all options of network/run.sh can be added)
-# Progress in synlife_<jobid>.log.
+# any folder, e.g. from a folder submitted/ in the repository:
+#   cd submitted
+#   sbatch ../submit.slurm                  real run, results in completed/<timestamp>_<name>/
+#   sbatch ../submit.slurm -t               test run, results in tests/man/
+#   sbatch ../submit.slurm -D "description" (all options of network/run.sh can be added)
+# The job log synlife_<jobid>.log in the submission folder shows the progress and errors;
+# all data and the complete log (run.log) are saved in the run folder in the repository.
 #
 # Python environment: the venv of network/setup_env.sh if it exists, otherwise the conda
 # environment synlife of the conda installation in CONDA_BASE (default ~/miniforge3).

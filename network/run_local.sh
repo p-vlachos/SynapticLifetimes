@@ -16,7 +16,15 @@ if [ "$MODE" != "run" ]; then
     TESTFLAG='-t'
 fi
 
+# print progress immediately (output goes to a pipe or file)
+export PYTHONUNBUFFERED=1
+
 PYTHONPATH="$PWD/src" python -m net.xstrct_run ${NPARSIM:+-c $NPARSIM} $TESTFLAG
+status=$?
+if [ $status -ne 0 ]; then
+    echo "Error: the simulation failed (exit code $status), run folder left in $(pwd)"
+    exit $status
+fi
 
 if [ "$MODE" == "net-test" ]; then
 

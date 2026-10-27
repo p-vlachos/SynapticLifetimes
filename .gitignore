@@ -6,5 +6,5 @@
 __pycache__/
 # Python venv created by network/setup_env.sh
 myenv/
-# Slurm job logs of submit.slurm
-/synlife_*.log
+# Slurm job logs of submit.slurm (in any folder)
+synlife_*.log

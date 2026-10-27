@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use('Agg')
 
-import os, random
+import glob, os, random, traceback
 from pypet import Environment
 from .add_parameters import add_params
 from .xstrct_netw import run_net
@@ -56,10 +56,25 @@ def main(name, explore_dict, postprocess=False, ncores=1, testrun=False, commit=
 
         post_process(tr)
 
-    if postprocess:
-        env.run(post_process)
-    else:
-        env.run(run_sim)
+    def mark_failures(run_function):
+        """ pypet only logs the errors of single runs (in their own processes), so failed
+            runs leave a file failed_run_<idx>.txt with the traceback """
+        def run(tr):
+            try:
+                run_function(tr)
+            except BaseException:
+                with open('failed_run_%.4d.txt' % tr.v_idx, 'w') as f:
+                    f.write(traceback.format_exc())
+                raise
+        return run
+
+    for fname in glob.glob('failed_run_*.txt'):
+        os.remove(fname)
+
+    env.run(mark_failures(post_process if postprocess else run_sim))
+
+    # the failed runs
+    return sorted(glob.glob('failed_run_*.txt'))
 
 
 

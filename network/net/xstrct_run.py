@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 
 import git
 
@@ -36,7 +37,7 @@ if not args.testrun:
         print("WARNING: uncommitted changes, saved in uncommitted_changes.diff "
               "(relative to commit {})".format(commit.hexsha[:7]))
 
-main(
+failed_runs = main(
     name=name,
     postprocess=args.postprocess,
     ncores=ncores,
@@ -45,3 +46,8 @@ main(
     commit=commit,
     uncommitted_changes=uncommitted_changes
 )
+
+if failed_runs:
+    print("ERROR: {:d} of {:d} simulation(s) failed, see {}".format(
+        len(failed_runs), n_parameter_sets, ", ".join(failed_runs)))
+    sys.exit(1)

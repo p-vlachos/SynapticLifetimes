@@ -7,10 +7,11 @@ usage: ./run.sh [-t] [-b] [-n N] [-P name] [-D description]
 Runs all parameter sets of net/explored_params.py, in a copy of the code in
 ../running/<timestamp>_<name>/, which is moved to ../completed/ when finished.
 The git commit is recorded with the results; uncommitted changes of tracked
-files are saved in uncommitted_changes.diff of the run folder.
+files are saved in uncommitted_changes.diff of the run folder. The complete
+output is printed and saved in run.log of the run folder.
 
   -t          test run: no git record, results go to ../tests/man/
-  -b          run in the background (output in nohup.out of the run folder)
+  -b          run in the background (output only in run.log of the run folder)
   -n N        run at most N simulations in parallel (default: all parameter
               sets, at most the number of available cores; each simulation
               needs ~4 GB of memory with N_e=1600)
@@ -58,10 +59,16 @@ if [ -n "$DESCRIPTION" ]; then
 fi
 
 echo "Run folder: running/$RUNNAME"
+if [ -n "$SLURM_JOB_ID" ]; then
+    echo "Slurm job $SLURM_JOB_ID on $(hostname)" > run.log
+fi
+
+# the complete output is saved in run.log of the run folder (moved with it)
 if $BACKGROUND
 then
-    nohup ./src/run_local.sh $RUNNAME $MODE "$NPARSIM" > nohup.out 2>&1 &
-    echo "Running in the background, output in running/$RUNNAME/nohup.out"
+    nohup ./src/run_local.sh $RUNNAME $MODE "$NPARSIM" >> run.log 2>&1 &
+    echo "Running in the background, output in running/$RUNNAME/run.log"
 else
-    ./src/run_local.sh $RUNNAME $MODE "$NPARSIM"
+    ./src/run_local.sh $RUNNAME $MODE "$NPARSIM" 2>&1 | tee -a run.log
+    exit ${PIPESTATUS[0]}
 fi
