@@ -87,7 +87,7 @@ syn_noise_vars = '''a : 1
                   syn_sigma : 1/second (shared)'''
 # exact update of the (Stratonovich) multiplicative weight noise da/dt = a*sqrt(syn_sigma)*xi
 # over an interval of synEE_mod_dt, followed by clipping to the weight bounds
-syn_noise_update = '''a = a*exp(syn_noise_active*syn_active*sqrt(syn_sigma*synEE_mod_dt)*randn())
+syn_noise_update = '''a = a*exp(syn_active*sqrt(syn_sigma*synEE_mod_dt)*randn())
                       a = syn_active*clip(a, amin, amax)'''
 
 
@@ -106,7 +106,6 @@ synEE_mod = '''
             insert_P : 1 (shared) 
             p_inactivate : 1 (shared)
             stdp_active : integer (shared)
-            syn_noise_active : integer (shared)
 
             scl_rec_start : second (shared)
             scl_rec_max   : second (shared)

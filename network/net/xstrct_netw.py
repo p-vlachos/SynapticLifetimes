@@ -350,13 +350,13 @@ def run_net(tr):
     # default clock, so that STDP uses the exact spike times)
     if tr.syn_noise:
         SynEE.syn_sigma = tr.syn_sigma_EE
-        SynEE.run_regularly(tr.syn_noise_update, dt=tr.synEE_mod_dt, when='after_groups',
-                            name='SynEE_noise')
+        synee_noise = SynEE.run_regularly(tr.syn_noise_update, dt=tr.synEE_mod_dt,
+                                          when='after_groups', name='SynEE_noise')
 
     if tr.syn_noise and tr.istdp_active:
         SynEI.syn_sigma = tr.syn_sigma_EI
-        SynEI.run_regularly(tr.syn_noise_update, dt=tr.synEE_mod_dt, when='after_groups',
-                            name='SynEI_noise')
+        synei_noise = SynEI.run_regularly(tr.syn_noise_update, dt=tr.synEE_mod_dt,
+                                          when='after_groups', name='SynEI_noise')
 
     if tr.adjust_insertP and tr.adjust_insertP_mode == 'constant_count':
         # at t=0 the number of active synapses equals the target count, so the
@@ -367,7 +367,6 @@ def run_net(tr):
         SynEE.insert_P = tr.insert_P
     SynEE.p_inactivate = tr.p_inactivate
     SynEE.stdp_active = 1
-    SynEE.syn_noise_active = 1
     # weight bounds, used by STDP, normalization and noise clipping
     SynEE.amax = tr.amax
     SynEE.amin = tr.amin
@@ -376,7 +375,6 @@ def run_net(tr):
         SynEI.stdp_active=1
         SynEI.amin = tr.amin_i if tr.amin_i >= 0 else tr.amin
         SynEI.amax = tr.amax_i if tr.amax_i >= 0 else tr.amax
-        SynEI.syn_noise_active = 1
 
     # initially active EE synapses
     if tr.ddcon_active:
@@ -776,10 +774,10 @@ def run_net(tr):
     SynEE.stdp_active=0
     if tr.istdp_active:
         SynEI.stdp_active=0
-    SynEE.syn_noise_active = 0
-    if tr.istdp_active:
-        # otherwise we use a simplified model and don't have this parameter
-        SynEI.syn_noise_active = 0
+    if tr.syn_noise:
+        synee_noise.active = False
+        if tr.istdp_active:
+            synei_noise.active = False
 
     set_active(GExc_spks, GInh_spks)
 
