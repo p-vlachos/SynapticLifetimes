@@ -53,8 +53,12 @@ def plot_isi_all(ax, nsp, spks, tmin, tmax, xmax=XMAX):
         isis.append(isi)
     isis = np.hstack(isis)
 
-    bins = np.arange(0.0, np.max(isis) + ISI_BIN_WIDTH/ms, ISI_BIN_WIDTH/ms)
-    ax.hist(isis, histtype="step", bins=bins, label=f"[{tmin:4.0f}, {tmax:4.0f}] s", density=True, ls="--")
+    if len(isis) > 0:
+        bins = np.arange(0.0, np.max(isis) + ISI_BIN_WIDTH/ms, ISI_BIN_WIDTH/ms)
+        ax.hist(isis, histtype="step", bins=bins, label=f"[{tmin:4.0f}, {tmax:4.0f}] s", density=True, ls="--")
+    else:
+        # no neuron spiked twice in this period
+        ax.text(0.5, 0.5, "no ISIs", transform=ax.transAxes, ha="center")
     ax.set_xlabel("ISI [ms]")
     ax.set_ylabel("density")
     ax.set_title("Inter Spike Interval of all exc. neurons")
