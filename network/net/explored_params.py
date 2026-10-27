@@ -15,8 +15,8 @@ input_dict = {'T1': [10 * second],
               'T5': [1500 * second],     # 15_000
               'dt': [0.1 * ms],
               
-              'random_seed': [7910], #, 13278, 37459, 7910, 13278, 37459]
-              'pp_tcut': [500 * second],# Synapse turnover calculation onset
+              'random_seed': [7910, 13278, 37459, 9827, 8179],
+              'pp_tcut': [500 * second],    # Synapse turnover calculation onset
 
               # Network parameters
               'N_e': [1600],
