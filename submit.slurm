@@ -5,7 +5,7 @@
 #SBATCH --exclusive              # the whole node: all parameter sets run in parallel
 #SBATCH --mem=0                  # all memory of the node (~4 GB per simulation with N_e=1600)
 #SBATCH --time=12:00:00          # a full run (N_e=1600, T2=5000 s, T5=1500 s) takes ~3.5 h
-##SBATCH --partition=<name>      # uncomment if your cluster requires a partition (see sinfo)
+#SBATCH --partition=general1,general2      # uncomment if your cluster requires a partition (see sinfo)
 
 # Runs all parameter sets of network/net/explored_params.py on one node; submit from the
 # repository root:
