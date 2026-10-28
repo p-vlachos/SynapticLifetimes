@@ -5,7 +5,7 @@
 #SBATCH --nodes=1
 #SBATCH --exclusive                  # the whole node: all parameter sets run in parallel
 #SBATCH --mem=0                      # all memory of the node (~4 GB per simulation, N_e=1600)
-#SBATCH --time=12:00:00              # a full run (N_e=1600, T2=5000 s, T5=1500 s) takes ~3.5 h
+#SBATCH --time=5-12:00:00            # a full run (N_e=1600, T2=5000 s, T5=1500 s) takes ~3.5 h
 
 # Runs network/run.sh, i.e. all parameter sets of network/net/explored_params.py, on one node.
 # Submit from the folder where the job log should go, e.g.:
