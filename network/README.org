@@ -84,7 +84,7 @@ sbatch ~/projects/SynapticLifetimes/submit.slurm
 - The results are saved in ~completed/<timestamp>_<name>/~ as for local runs.
 - Options of ~run.sh~ can be added: ~sbatch ~/projects/SynapticLifetimes/submit.slurm -n 4~.
 - At the top of ~submit.slurm~: the partition (~general1,general2~ on Goethe) and the time
-  limit (12 h). It activates the conda environment of ~$HOME/miniforge3~; change that line if
+  limit. It activates the conda environment of ~$HOME/miniforge3~; change that line if
   conda is installed elsewhere, and add ~module load~ lines if the cluster needs them for ~g++~
   or LaTeX.
 

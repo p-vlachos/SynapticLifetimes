@@ -18,6 +18,18 @@ a_min_insert = [0.0363] # minimal EE weight: new synapses start with it (a_inser
 stdp_eta = 0.01         # scale of the STDP amplitudes (Aplus, Aminus, iAplus, iAminus)
 ifactor = 1.75          # scale of the inhibitory weights and iSTDP amplitudes
 
+# Ten simulations, all run in parallel: five cases x two strengths of the membrane noise
+# (simulation k = builds/000k, figures/<figure>/000k.png):
+#
+#   k     case                                              changed parameter
+#   0, 1  as it is (all mechanisms on)                      -
+#   2, 3  without distance-dependent connectivity           ddcon_active = 0
+#   4, 5  without synaptic delays                           syn_delay_active = 0
+#   6, 7  without synaptic weight noise                     syn_noise = 0
+#   8, 9  without inhibitory normalization                  iscl_active = 0
+#
+# even k: sigma = 4.5 mV (reverberating regime), odd k: sigma = 6.1 mV (subcritical regime)
+
 input_dict = {# Simulation phases (run one after the other)
               'T1': [10 * second],      # initial phase: everything recorded (spikes, traces)
               'T2': [50000 * second],   # main phase: plasticity and synapse turnover (only turnover and weight snapshots recorded)
@@ -43,12 +55,12 @@ input_dict = {# Simulation phases (run one after the other)
               'a_ei': [0.0438*ifactor],
               'a_ii': [0.0438*ifactor*2.5],
 
-              'ddcon_active': [1],      # 1: neurons on a square sheet (1000 um), connection probability falls
-                                        #    with distance (Gaussian); 0: random connectivity
+              'ddcon_active':     [1, 1,  0, 0,  1, 1,  1, 1,  1, 1],   # 1: neurons on a square sheet (1000 um),
+                                        # connection probability falls with distance (Gaussian); 0: random connectivity
               'sigma_dd': [150*um],     # standard deviation of the Gaussian distance dependence
               'grid_wrap': [1],         # 1: the sheet is a torus (no edges)
 
-              'syn_delay_active': [1],      # 1: synaptic transmission delays (otherwise none)
+              'syn_delay_active': [1, 1,  1, 1,  0, 0,  1, 1,  1, 1],   # 1: synaptic transmission delays (otherwise none)
               'syn_dd_delay_active' : [0],  # 1: delays = distance / velocity (requires ddcon_active)
               'synEE_delay': [3.0*ms],              # otherwise uniform delays: mean ...
               'synEE_delay_windowsize': [1.5*ms],   # ... and width of the uniform distribution
@@ -64,8 +76,8 @@ input_dict = {# Simulation phases (run one after the other)
                                                 # or 'poisson' (Poisson spike trains)
               'mu_e': [0.0*mV],                 # mean of the external input (exc./inh. neurons)
               'mu_i': [0.0*mV],
-              'sigma_e': [4.5*mV, 6.1*mV],      # strength of the membrane noise: 6.1 mV gives the
-              'sigma_i': [4.5*mV, 6.1*mV],      # subcritical (noise-driven), 4.5 mV the reverberating regime
+              'sigma_e': [4.5*mV, 6.1*mV]*5,    # strength of the membrane noise: 6.1 mV gives the
+              'sigma_i': [4.5*mV, 6.1*mV]*5,    # subcritical (noise-driven), 4.5 mV the reverberating regime
               'Vt_e': [-50. * mV],      # spike threshold
               'Vt_i': [-50. * mV],
               'Vr_e': [-70. * mV],      # reset potential after a spike (initial V: uniform between Vr and Vt)
@@ -79,7 +91,7 @@ input_dict = {# Simulation phases (run one after the other)
               'tau_e': [5*ms],              # decay time constant of the excitatory conductance
               'tau_i': [10*ms],             # decay time constant of the inhibitory conductance
 
-              'syn_noise': [1],                 # 1: multiplicative noise on the EE and EI weights
+              'syn_noise':        [1, 1,  1, 1,  1, 1,  0, 0,  1, 1],   # 1: multiplicative noise on the EE and EI weights
               'syn_sigma_EE': [1e-9/second],    # its strength (1e-9/s: negligible)
               'syn_sigma_EI': [1e-9/second],
 
@@ -119,7 +131,7 @@ input_dict = {# Simulation phases (run one after the other)
               'scl_scaling_eta': [0.0001],      # change of ANormTar per scl_scaling_dt: eta*(kappa - rate)/kappa
               'scl_scaling_dt': [1 * second],   # interval of the adaptation of ANormTar
 
-              'iscl_active': [1],               # 1: normalization of the EI input weights (sum -> iATotalMax)
+              'iscl_active':      [1, 1,  1, 1,  1, 1,  1, 1,  0, 0],   # 1: normalization of the EI input weights (sum -> iATotalMax)
 
               # --- General ---
               'tau_r': [15 * second],   # time constant of the firing rate estimate of the excitatory neurons
@@ -171,7 +183,7 @@ input_dict = {# Simulation phases (run one after the other)
 }
 
 
-name = 'hdf5_data'      # name of the run: run folder <timestamp>_<name>, data/<name>.hdf5
+name = 'mechanisms'     # name of the run: run folder <timestamp>_<name>, data/<name>.hdf5
 explore_dict = n_list(input_dict)
 
 if __name__ == "__main__":
